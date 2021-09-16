@@ -1,40 +1,32 @@
-import Model
 from random import random
+
+from Individual import Individual
+
 
 class Population:
     """
     Use this class as "loader" of sorts for a collection of model individuals.
     """
 
-    def __init__(self, population_size):
+    def __init__(self, population_size, genome_length):
         """
         Put any declarations of object fields/variables in this method.
         """
-        pass
+        self.population_size = population_size
+        self.genome_length = genome_length
+        self.individuals = self.populate()
 
-    def __individuals(self):
+    def populate(self):
         """
-
+        
         :return: List of individuals
         """
         list_of_individuals = []
         for individual in range(self.population_size):
-            g = [random() for i in range(self.genome)]
-            list_of_individuals.append(Individual(g))
+            input_genome = [random() for i in range(self.genome_length)]
+            new_individual = Individual(input_genome)
+            list_of_individuals.append(new_individual)
         return list_of_individuals
-
-
-class Individual:
-    """
-    Use this class initialize model individuals.
-    """
-
-    def __init__(self, genotype):
-        """
-        Put any declarations of object fields/variables in this method.
-        :param genome:
-        """
-        pass
 
 
 #   Use this conditional to test the class by running it "standalone".
