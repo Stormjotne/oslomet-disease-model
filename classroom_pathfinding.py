@@ -5,11 +5,17 @@ import matplotlib.pyplot as plt
 import cv2
 import time
 from pathfinding import make_grid, find_path
-from constants import world_size
+from constants import world_size, pathfinding_range
+from small_classroom_destinations import destinations
 
 # world size, 300 for single class room view, 500/1000 for more building space
 world = np.zeros((world_size, world_size, 3))
 world_map = np.zeros((world_size, world_size))
+
+# map that will contain the invisible paths that the agents will follow using vectors
+hidden_map = np.zeros((world_size, world_size))
+
+# creates the grid used by the pathfinding algorithm
 grid = make_grid(world_size)
 
 
@@ -74,7 +80,7 @@ world_map[200:225, 250:254] = 0
 D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
 
 
-nr_of_agents = 12  # current max 42
+nr_of_agents = 25  # current max 42
 
 agent_list_infected = np.random.rand(nr_of_agents) > 1
 agent_list_infected[0] = 1
@@ -82,8 +88,38 @@ agent_list_susceptible = np.ones(nr_of_agents)
 
 
 positions = np.random.rand(2, nr_of_agents)*world_size
+#positions = np.array([[100.0], [30.0]])
+
+# toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
+agent_movement_mode = np.zeros(nr_of_agents)
+agent_movement_mode[1] = 1
+
+# toggle vector based pathfinding during random movement on or off.
+agent_vector_pathfinding = np.ones(nr_of_agents)
+# agent_vector_pathfinding[:] = 0
+
+# the start and end node for the invisible path
+hidden_start = np.array([[100], [30]])
+
+# hidden_end = np.array([[270], [150]])
+hidden_end = np.array([[120], [110]])
 
 
+# creates the invisible path for vector path-following
+hidden_path = []
+
+if not hidden_path:
+    hidden_path = find_path(grid, world_map, world_size, hidden_start[0][0], hidden_start[1][0], hidden_end[0][0], hidden_end[1][0])
+
+#print(hidden_path)
+#print(len(hidden_path))
+
+
+for i in range(len(hidden_path)):
+
+    x1 = hidden_path[i][1]
+    y1 = hidden_path[i][0]
+    hidden_map[y1][x1] = 1+i
 
 
 infected_positions = np.where(agent_list_infected == 1)
@@ -106,14 +142,12 @@ plt.title("Current positions")
 plt.xlabel("x positions")
 plt.ylabel("y positions")
 
-destinations = [[120, 120, 120, 120, 120, 120, 145, 145, 145, 145, 145, 145, 145, 145, 145, 170, 170, 170, 170, 170, 170
-                    , 170, 170, 170, 205, 205, 205, 205, 205, 205, 205, 205, 205, 230, 230, 230, 230, 230, 230, 230, 230, 230],
-                [85, 95, 145, 155, 205, 215, 80, 90, 100, 140, 150, 160, 200, 210, 220, 80, 90, 100, 140, 150, 160, 200,
-                 210, 220, 80, 90, 100, 140, 150, 160, 200, 210, 220, 80, 90, 100, 140, 150, 160, 200, 210, 220]]
-
 path = []
 
-def calculate_path(nr_of_agents,grid,world_map,world_size,positions,destinations):
+
+# a function that calculates an individual path for each agent.
+def calculate_path(nr_of_agents, grid, world_map, world_size, positions, destinations):
+
     p = []
 
     for i in range(nr_of_agents):
@@ -121,71 +155,105 @@ def calculate_path(nr_of_agents,grid,world_map,world_size,positions,destinations
         p[i] = find_path(grid, world_map, world_size, positions[0][i], positions[1][i], destinations[0][i], destinations[1][i])
     return p
 
+
 random_movement = 1
 count = 0
 while True:
-    #random movement:
+    # random movement:
     if random_movement == 1:
 
+        p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
+        p_2 = np.rot90(p_1, axes=(1, 2))
+        p_1 -= p_2
 
-            p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
-            p_2 = np.rot90(p_1, axes=(1, 2))
-            p_1 -= p_2
+        distances = np.linalg.norm(p_1, axis=0)
+        distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range + 20
 
-            distances = np.linalg.norm(p_1, axis=0)
-            distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range + 20
-
-            infection_cases = np.array(np.where(distances < infection_range))
-            velocity_cases = np.array(np.where(distances < velocity_range))
-            attraction_cases = np.array(np.where(distances < attraction_range))
-            dispersion_cases = np.array(np.where(distances < dispersion_range))
+        infection_cases = np.array(np.where(distances < infection_range))
+        velocity_cases = np.array(np.where(distances < velocity_range))
+        attraction_cases = np.array(np.where(distances < attraction_range))
+        dispersion_cases = np.array(np.where(distances < dispersion_range))
     # print(distances)
     # print()
 
     # print(infection_cases.shape)
 
-            if infection_cases.shape[1] >= 1:
-                infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-                infections_where = np.array(np.where(infections == 1))
+        if infection_cases.shape[1] >= 1:
+            infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+            infections_where = np.array(np.where(infections == 1))
 
-                agent_list_infected[infection_cases[1, infections_where]] = 1
-                agent_list_susceptible[infection_cases[1, infections_where]] = 0
-            if dispersion_cases.shape[1] >= 1:
+            agent_list_infected[infection_cases[1, infections_where]] = 1
+            agent_list_susceptible[infection_cases[1, infections_where]] = 0
+        if dispersion_cases.shape[1] >= 1:
         # This would be where you implement social distancing as a force moving agent apart.
         # This is done in BOID simulations so look into that.
-                pass
-            if attraction_cases.shape[1] >= 1:
+            pass
+        if attraction_cases.shape[1] >= 1:
         # make agents cluster - again BOIDS
-                pass
-            if velocity_cases.shape[1] >= 1:
+            pass
+        if velocity_cases.shape[1] >= 1:
         # make agents align their movement - BOIDS
-                pass
+            pass
 
         # wall interaction
-            for i0 in range(nr_of_agents):
-                wall_perception = world_map[
+        for i0 in range(nr_of_agents):
+            wall_perception = world_map[
                       (positions[0, i0] - max_speed).astype(np.int32):(positions[0, i0] + max_speed + 1).astype(
                           np.int32),
                       (positions[1, i0] - max_speed).astype(np.int32):(positions[1, i0] + max_speed + 1).astype(
                           np.int32)]
-                wall_location = np.array(np.where(wall_perception > 0))
-    # subtract max speed to make the values relative to the center
-                wall_location -= max_speed
+            wall_location = np.array(np.where(wall_perception > 0))
+            # subtract max speed to make the values relative to the center
+            wall_location -= max_speed
 
-                velocity[:, i0] -= np.sum(wall_location, 1) * 10
+            # hidden path interaction
+            path_location = np.zeros((2, 1))
 
-            velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 2
-            velocity_length[:] = np.linalg.norm(velocity, ord=2, axis=0)
-            velocity *= max_speed / velocity_length
+            if agent_vector_pathfinding[i0] == 1:
+                hidden_path_perception = hidden_map[
+                                  (positions[0, i0] - pathfinding_range).astype(np.int32):(
+                                              positions[0, i0] + pathfinding_range+1).astype(
+                                      np.int32),
+                                  (positions[1, i0] - pathfinding_range).astype(np.int32):(
+                                              positions[1, i0] + pathfinding_range+1).astype(
+                                      np.int32)]
+                # print(hidden_path_perception)
+                # the intitial value should fix a rare error where the array was empty
+                highest_value = np.amax(hidden_path_perception, initial=1)
+                #path_location = np.zeros((2, 1))
 
-            positions += velocity
-            count += 1
-            if count == 80:
-                random_movement = 0
+                if highest_value != 0:
+                    path_location = np.array(np.where(hidden_path_perception == highest_value))
+                    path_location -= pathfinding_range
 
+
+            velocity[:, i0] -= np.sum(wall_location, 1) * 10
+            # print(velocity)
+
+            velocity[:, i0] += np.sum(path_location, 1) * 30
+            # print(velocity)
+
+        velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 2
+        velocity_length[:] = np.linalg.norm(velocity, ord=2, axis=0)
+        velocity *= max_speed / velocity_length
+
+        # cancel the velocity change for agents who are not supposed to move randomly
+        cancel_velocity = np.array(np.where(agent_movement_mode == 1))
+        for vel in cancel_velocity:
+            velocity[:, vel] = 0
+
+        # update all agent positions with velocity
+        positions += velocity
+
+        # change random movement to 0 after x turns
+        count += 1
+        if count == 200:
+            random_movement = 1
+
+    # if the agent is supposed to follow an individual direct path
     if random_movement == 0:
         if not path:
-            path = calculate_path(nr_of_agents,grid,world_map,world_size,positions,destinations)
+            path = calculate_path(nr_of_agents, grid, world_map, world_size, positions, destinations)
         for i in range(nr_of_agents):
 
             if path[i]:
@@ -194,6 +262,7 @@ while True:
                 positions[0][i] = y1
                 positions[1][i] = x1
                 path[i].pop(0)
+
 
 
     # here dealing with agents moving outside the world
