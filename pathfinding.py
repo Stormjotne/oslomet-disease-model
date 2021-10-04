@@ -158,6 +158,7 @@ def find_path(grid, world_map, world_size, start_cor_y, start_cor_x, end_cor_y, 
     start_cor_y = start_cor_y.astype(np.int32)
     start_cor_x = start_cor_x.astype(np.int32)
 
+
     end_cor_y = end_cor_y
     end_cor_x = end_cor_x
 
@@ -179,7 +180,4 @@ def find_path(grid, world_map, world_size, start_cor_y, start_cor_x, end_cor_y, 
     #print(p)
     p.reverse()
     #print(p)
-
     return p
-
-
