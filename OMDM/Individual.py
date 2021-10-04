@@ -1,3 +1,7 @@
+"""
+
+"""
+from .Genome import Genome
 
 
 class Individual:
@@ -5,12 +9,18 @@ class Individual:
     Use this class initialize model individuals.
     """
 
-    def __init__(self, genotype):
+    def __init__(self, genome_length=None, input_genome=None):
         """
         Put any declarations of object fields/variables in this method.
-        :param genome:
+        :param genome_length:
         """
-        self.genotype = genotype
+        #   If genome length is provided, create a new genome.
+        if genome_length:
+            self.genome = Genome(genome_length)
+        #   If an input genome is provided, base the new Genome on the input.
+        elif input_genome:
+            self.genome = Genome(input_genes=input_genome)
+        #   Declare other fields.
         self.phenotype = None
         self.fitness = None
         self.model = None

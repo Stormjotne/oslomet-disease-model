@@ -1,5 +1,6 @@
+"""
 
-
+"""
 class Model:
     """
     Implement the Agent-based Model in this class.

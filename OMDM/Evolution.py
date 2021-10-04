@@ -1,12 +1,13 @@
+"""
+
+"""
 from multiprocessing import Pool, current_process
 from time import sleep
 from random import random, choice, shuffle
 
-from Population import Population
-from Individual import Individual
-from Model import Model
-import Data
-import Fitness
+from .Population import Population
+from .Individual import Individual
+from . import Data, Fitness
 
 
 class Evolution:
@@ -51,7 +52,7 @@ class Evolution:
         """
         #   Fake phenotype
         #   Just sorted genome
-        phenotype = sorted(individual.genotype)
+        phenotype = sorted(individual.genome.genes)
         return phenotype
     
     @staticmethod
@@ -90,13 +91,13 @@ class Evolution:
         i = 0
         if self.do_crossover:
             while len(next_generation) < self.population_size:
-                new_genome = self.crossover(parents[i].genotype, parents[i + 1].genotype)
-                next_generation.append(Individual(genotype=new_genome))
+                new_genes = self.crossover(parents[i].genome.genes, parents[i + 1].genome.genes)
+                next_generation.append(Individual(input_genome=new_genes))
                 i = (i + 2) % (len(parents) - 1)
         else:
             while len(next_generation) < self.population_size:
-                new_genome = self.clone(parents[i % self.number_of_parents].genotype)
-                next_generation.append(Individual(genotype=new_genome))
+                new_genes = self.clone(parents[i % self.number_of_parents].genome.genes)
+                next_generation.append(Individual(input_genome=new_genes))
                 i += 1
         return next_generation
     
@@ -105,10 +106,10 @@ class Evolution:
         Create new genome from parent's genome with a chance of mutation.
         :param parent_genome:
         """
-        genome = []
+        genes = []
         for gene in parent_genome:
-            genome.append(random() if random() < self.mutation_probability else gene)
-        return genome
+            genes.append(random() if random() < self.mutation_probability else gene)
+        return genes
 
     def crossover(self, parent_genome_one, parent_genome_two):
         """
@@ -116,10 +117,10 @@ class Evolution:
         :param parent_genome_one:
         :param parent_genome_two:
         """
-        genome = []
+        genes = []
         for gene1, gene2 in zip(parent_genome_one, parent_genome_two):
-            genome.append(random() if random() < self.mutation_probability else choice((gene1, gene2)))
-        return genome
+            genes.append(random() if random() < self.mutation_probability else choice((gene1, gene2)))
+        return genes
     
     def evolve(self, printout=False):
         """

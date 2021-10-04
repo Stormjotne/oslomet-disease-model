@@ -1,6 +1,9 @@
+"""
+
+"""
 from random import random
 
-from Individual import Individual
+from .Individual import Individual
 
 
 class Population:
@@ -23,8 +26,7 @@ class Population:
         """
         list_of_individuals = []
         for individual in range(self.population_size):
-            input_genome = [random() for i in range(self.genome_length)]
-            new_individual = Individual(input_genome)
+            new_individual = Individual(genome_length=self.genome_length)
             list_of_individuals.append(new_individual)
         return list_of_individuals
 
