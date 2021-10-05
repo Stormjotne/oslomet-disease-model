@@ -19,51 +19,6 @@ world_map[0:2, 0:world_size+1] = 20
 # bottom border
 world_map[world_size-1:world_size+1, 0:world_size+1] = 20
 
-# small classroom:
-
-# left wall
-world_map[47:254, 47:51] = 20
-# right wall
-world_map[47:254, 250:254] = 20
-# top wall
-world_map[47:51, 47:254] = 20
-# bottom wall
-world_map[250:254, 47:254] = 20
-
-# desks
-
-# teacher desk dimensions x = 30 y = 10
-world_map[75:85, 135:165] = 20
-# middle row
-# short desk dimensions x = 30 y = 10
-world_map[105:115, 135:165] = 20
-# long desk dimensions x = 40 y = 10
-world_map[130:140, 130:170] = 20
-world_map[155:165, 130:170] = 20
-world_map[190:200, 130:170] = 20
-world_map[215:225, 130:170] = 20
-
-# left side
-# short desk dimensions x = 30 y = 10
-world_map[105:115, 75:105] = 20
-# long desk dimensions x = 40 y = 10
-world_map[130:140, 70:110] = 20
-world_map[155:165, 70:110] = 20
-world_map[190:200, 70:110] = 20
-world_map[215:225, 70:110] = 20
-
-
-# right side
-# short desk dimensions x = 30 y = 10
-world_map[105:115, 195:225] = 20
-# long desk dimensions x = 40 y = 10
-world_map[130:140, 190:230] = 20
-world_map[155:165, 190:230] = 20
-world_map[190:200, 190:230] = 20
-world_map[215:225, 190:230] = 20
-
-# door
-world_map[200:225, 250:254] = 0
 
 
 D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
@@ -79,10 +34,10 @@ infected_positions = np.where(agent_list_infected == 1)
 
 velocity = (np.random.rand(2, nr_of_agents)-0.5)*2
 velocity_length = np.linalg.norm(velocity, ord=2, axis=0)
-
+print(velocity_length)
 world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
-
-infection_range = 3
+world_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
+infection_range = 5
 velocity_range = 10
 attraction_range = 20
 dispersion_range = 5
@@ -100,13 +55,13 @@ while True:
     p_1 -= p_2
 
     distances = np.linalg.norm(p_1, axis=0)
-    distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range + 20
+    distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range +20
 
     infection_cases = np.array(np.where(distances < infection_range))
     velocity_cases = np.array(np.where(distances < velocity_range))
     attraction_cases = np.array(np.where(distances < attraction_range))
     dispersion_cases = np.array(np.where(distances < dispersion_range))
-    # print(distances)
+
     # print()
 
     # print(infection_cases.shape)
@@ -128,20 +83,32 @@ while True:
         # make agents align their movement - BOIDS
         pass
 
-        # wall interaction
+        # wall interaction and agent collision avoidance
     for i0 in range(nr_of_agents):
         wall_perception = world_map[
                       (positions[0, i0] - max_speed).astype(np.int32):(positions[0, i0] + max_speed + 1).astype(
                           np.int32),
                       (positions[1, i0] - max_speed).astype(np.int32):(positions[1, i0] + max_speed + 1).astype(
                           np.int32)]
-        wall_location = np.array(np.where(wall_perception > 0))
-    # subtract max speed to make the values relative to the center
+        agent_percetion = world_map[
+                      (positions[0, i0] - dispersion_range).astype(np.int32):(positions[0, i0] + dispersion_range + 1).astype(
+                          np.int32),
+                      (positions[1, i0] - dispersion_range).astype(np.int32):(positions[1, i0] + dispersion_range + 1).astype(
+                          np.int32)]
+
+        #Looking for values of walls and agents
+        wall_location = np.array(np.where(wall_perception == 20))
+        agent_location= np.array(np.where(agent_percetion == 10))
+        # subtract max speed and dispertion range to make the values relative to the center
         wall_location -= max_speed
+        agent_location -=dispersion_range
 
-        velocity[:, i0] -= np.sum(wall_location, 1) * 10
+        #Subtracting the sum of distances from velocity of agent i0
+        velocity[:, i0] -= np.sum(wall_location, 1) *10 #This is where a force multiplier can be added
+        velocity[:, i0] -= np.sum(agent_location, 1) #This is where a force multiplier can be added
 
-    velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 2
+
+    velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 0.1
     velocity_length[:] = np.linalg.norm(velocity, ord=2, axis=0)
     velocity *= max_speed / velocity_length
 
@@ -156,17 +123,35 @@ while True:
     world[:, :, :] = D3_world_map
 
     world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
+
     infected_positions = np.array(np.where(agent_list_infected == 1))
     infected_positions = np.array(positions[:, infected_positions])
+
     # print(infected_positions)
     world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
     nr_of_infected.append(np.sum(agent_list_infected))
 
-    dim = (600, 600)
+    #Erasing old positions and owerwritten walls
+    world_map[:, :] = 0
+    #Updating new positions
+    world_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
 
-    world_resized = cv2.resize(world, dim, interpolation=cv2.INTER_AREA)
+    #Updating walls-  This must be done after an agent has moved to a location of a wall and therfore changed the pixel value from 20 to 10.
+    world_map[0:world_size + 1, 0:2] = 20
+    # right border
+    world_map[0:world_size + 1, world_size - 1:world_size + 1] = 20
+    # top border
+    world_map[0:2, 0:world_size + 1] = 20
+    # bottom border
+    world_map[world_size - 1:world_size + 1, 0:world_size + 1] = 20
 
-    cv2.imshow('frame', world_resized)
+
+    scale_percent = 200
+    width = int(world.shape[1] * scale_percent / 100)
+    height = int(world.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    resized = cv2.resize(world, dim, interpolation=cv2.INTER_LANCZOS4)
+    cv2.imshow('frame', resized)
 
     time.sleep(0.05)
 
