@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import cv2
 import time
 from pathfinding import make_grid, find_path
-from constants import world_size, pathfinding_range
+from constants import world_size, pathfinding_range, proximity_infection_chance
 from small_classroom_destinations import destinations
 
 # world size, 300 for single class room view, 500/1000 for more building space
@@ -159,42 +159,45 @@ def calculate_path(nr_of_agents, grid, world_map, world_size, positions, destina
 random_movement = 1
 count = 0
 while True:
-    # random movement:
-    if random_movement == 1:
 
-        p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
-        p_2 = np.rot90(p_1, axes=(1, 2))
-        p_1 -= p_2
 
-        distances = np.linalg.norm(p_1, axis=0)
-        distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range + 20
+    p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
+    p_2 = np.rot90(p_1, axes=(1, 2))
+    p_1 -= p_2
 
-        infection_cases = np.array(np.where(distances < infection_range))
-        velocity_cases = np.array(np.where(distances < velocity_range))
-        attraction_cases = np.array(np.where(distances < attraction_range))
-        dispersion_cases = np.array(np.where(distances < dispersion_range))
+    distances = np.linalg.norm(p_1, axis=0)
+    distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range + 20
+
+    infection_cases = np.array(np.where(distances < infection_range))
+    velocity_cases = np.array(np.where(distances < velocity_range))
+    attraction_cases = np.array(np.where(distances < attraction_range))
+    dispersion_cases = np.array(np.where(distances < dispersion_range))
     # print(distances)
     # print()
 
     # print(infection_cases.shape)
 
-        if infection_cases.shape[1] >= 1:
-            infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-            infections_where = np.array(np.where(infections == 1))
+    if infection_cases.shape[1] >= 1:
+        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        infections_where = np.array(np.where(infections == 1))
 
+        if random.random() < proximity_infection_chance:
             agent_list_infected[infection_cases[1, infections_where]] = 1
             agent_list_susceptible[infection_cases[1, infections_where]] = 0
-        if dispersion_cases.shape[1] >= 1:
-        # This would be where you implement social distancing as a force moving agent apart.
-        # This is done in BOID simulations so look into that.
-            pass
-        if attraction_cases.shape[1] >= 1:
-        # make agents cluster - again BOIDS
-            pass
-        if velocity_cases.shape[1] >= 1:
-        # make agents align their movement - BOIDS
-            pass
 
+    if dispersion_cases.shape[1] >= 1:
+    # This would be where you implement social distancing as a force moving agent apart.
+    # This is done in BOID simulations so look into that.
+        pass
+    if attraction_cases.shape[1] >= 1:
+    # make agents cluster - again BOIDS
+        pass
+    if velocity_cases.shape[1] >= 1:
+    # make agents align their movement - BOIDS
+        pass
+
+    # random movement:
+    if random_movement == 1:
         # wall interaction
         for i0 in range(nr_of_agents):
             wall_perception = world_map[
