@@ -49,13 +49,13 @@ class Population:
         if self.do_crossover:
             while len(next_generation) < self.population_size:
                 #   Tuple of two parents' genomes.
-                parent_genomes = (parents[i].genome.genes, parents[i + 1].genome.genes)
+                parent_genomes = (parents[i].genome.genome, parents[i + 1].genome.genome)
                 next_generation.append(Individual(self.mutation_probability, input_genomes=parent_genomes))
                 i = (i + 2) % (len(parents) - 1)
         else:
             while len(next_generation) < self.population_size:
                 #   Single parent's genome.
-                parent_genome = parents[i % self.number_of_parents].genome.genes
+                parent_genome = parents[i % self.number_of_parents].genome.genome
                 next_generation.append(Individual(self.mutation_probability, input_genes=parent_genome))
                 i += 1
         return next_generation

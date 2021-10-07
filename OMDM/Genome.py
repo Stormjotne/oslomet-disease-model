@@ -7,31 +7,70 @@ from random import random, uniform, choice, shuffle
 class Genome:
     """
     Use this class initialize an individual's genome.
+    Genome is the dictionary wrapper around the gene values.
     """
 
-    def __init__(self, mutation_probability, genome_length=None, input_genes=None, input_genomes=None):
+    def __init__(self, mutation_probability, genome_length=None, input_genome=None, input_genomes=None):
         """
         Put any declarations of object fields/variables in this method.
         :param mutation_probability:
         :type mutation_probability:
         :param genome_length:
         :type genome_length:
-        :param input_genes:
-        :type input_genes:
+        :param input_genome:
+        :type input_genome:
         :param input_genomes:
         :type input_genomes:
         """
+        self.genome_labels = ["number_of_agents", "social_distancing", "hand_hygiene", "respiratory_hygiene",
+            "face_masks", "face_shields", "key_object_disinfection", "surface_disinfection",
+            "ventilation_of_indoor_spaces", "face_touching_avoidance", "test_based_screening",
+            "vaccination", "cohort_size", "electives"]
         self.mutation_probability = mutation_probability
         #   If genome length is provided, create new genes.
         if genome_length:
             self.genome_length = genome_length
-            self.genes = self.normalized_genes()
+            normalized_genes = self.normalized_genes()
+            self.genome = self.genes_to_genome(normalized_genes)
         #   If input genes are provided, make the Genome with the input genes.
-        elif input_genes:
-            self.genes = self.copy_genes(input_genes, )
+        elif input_genome:
+            copied_genes = self.copy_genes(input_genome)
+            self.genome = self.genes_to_genome(copied_genes)
         elif input_genomes:
-            self.genes = self.uniform_zip_genes(input_genomes[0], input_genomes[1])
+            uniform_zipped_genes = self.uniform_zip_genes(input_genomes[0], input_genomes[1])
+            self.genome = self.genes_to_genome(uniform_zipped_genes)
             
+    def genes_to_attributes(self, genes):
+        """
+        Create object attributes of genes with labels as field names.
+        :param genes:
+        :type genes:
+        :return:
+        :rtype:
+        """
+        pass
+    
+    def genes_to_genome(self, genes):
+        """
+        Create an ordered dictionary of genes with labels as keys.
+        :param genes:
+        :type genes:
+        :return:
+        :rtype:
+        """
+        return dict(zip(self.genome_labels, genes))
+
+    @staticmethod
+    def genome_to_genes(genome):
+        """
+        Unpack dictionary to manipulate gene values.
+        :param genome:
+        :type genome:
+        :return:
+        :rtype:
+        """
+        return list(genome.values())
+        
     def normalized_genes(self):
         """
         Create a list of random values between 0 and 1.
@@ -39,6 +78,21 @@ class Genome:
         :rtype:
         """
         return [random() for i in range(self.genome_length)]
+        
+    def copy_genes(self, input_genome):
+        """
+        Copy genes with chance of mutation.
+        :param input_genome:
+        :type input_genome:
+        :return:
+        :rtype:
+        """
+        genes = []
+        #   Unpack dictionary to manipulate gene values.
+        extracted_genes = self.genome_to_genes(input_genome)
+        for gene in extracted_genes:
+            genes.append(self.normalized_medium_mutation() if random() < self.mutation_probability else gene)
+        return genes
     
     def uniform_zip_genes(self, input_genes_one, input_genes_two):
         """
@@ -51,21 +105,11 @@ class Genome:
         :rtype:
         """
         genes = []
-        for gene_one, gene_two in zip(input_genes_one, input_genes_two):
+        #   Unpack dictionary to manipulate gene values.
+        extracted_genes_one = self.genome_to_genes(input_genes_one)
+        extracted_genes_two = self.genome_to_genes(input_genes_two)
+        for gene_one, gene_two in zip(extracted_genes_one, extracted_genes_two):
             genes.append(self.normalized_medium_mutation() if random() < self.mutation_probability else choice((gene_one, gene_two)))
-        return genes
-        
-    def copy_genes(self, input_genes):
-        """
-        Copy genes with chance of mutation.
-        :param input_genes:
-        :type input_genes:
-        :return:
-        :rtype:
-        """
-        genes = []
-        for gene in input_genes:
-            genes.append(self.normalized_medium_mutation() if random() < self.mutation_probability else gene)
         return genes
         
     @staticmethod
@@ -97,4 +141,9 @@ class Genome:
 
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
-    pass
+    new_genome = Genome(0.20, genome_length=9)
+    print(new_genome.genome)
+    copied_genome = Genome(0.20, input_genome=new_genome.genome)
+    print(copied_genome.genome)
+    uniform_zipped_genome = Genome(0.20, input_genomes=(new_genome.genome, copied_genome.genome))
+    print(uniform_zipped_genome.genome)

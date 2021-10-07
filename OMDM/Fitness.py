@@ -27,6 +27,7 @@ def relative_spread_fitness(input_phenotype):
 	:rtype:
 	"""
 	infected = input_phenotype["number_total_infected"]
+	#  infected = input_phenotype["number_currently_infected"]
 	agents = input_phenotype["number_of_agents"]
 	relative_spread = infected / agents
 	return 1 - relative_spread

@@ -134,16 +134,34 @@ class Model:
         '''
     
     def placeholder_simulate(self):
+        """
+        Just a mathematical model of the disease transmission with evolved parameters.
+        :return:
+        :rtype:
+        """
         step = 0
         while step < self.simulation_time:
             self.number_currently_infected = 0
             for agent in range(self.number_of_agents):
-                if random() < self.base_transmission_probability:
-                    self.number_currently_infected += 1
+                if 0 <= self.social_distancing < 1:
+                    if random() < self.base_transmission_probability:
+                        self.number_currently_infected += 1
+                elif 1 <= self.social_distancing < 2:
+                    if random() < self.one_meter_transmission_probability:
+                        self.number_currently_infected += 1
+                elif 2 <= self.social_distancing < 3:
+                    if random() < self.two_meter_transmission_probability:
+                        self.number_currently_infected += 1
+                elif 3 <= self.social_distancing < 4.1:
+                    if random() < self.four_meter_transmission_probability:
+                        self.number_currently_infected += 1
             self.infected_history.append(self.number_currently_infected)
             self.number_total_infected += self.number_currently_infected
             step += 1
-        return self.number_currently_infected, self.infected_history, self.number_total_infected, self.number_of_agents
+        return {"number_currently_infected": self.number_currently_infected,
+                    "infected_history": self.infected_history,
+                    "number_total_infected": self.number_total_infected,
+                    "number_of_agents": self.number_of_agents}
         
     
 #   Use this conditional to test the class by running it "standalone".

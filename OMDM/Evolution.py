@@ -54,7 +54,7 @@ class Evolution:
         """
         #   Fake phenotype
         #   Just sorted genome
-        phenotype = sorted(individual.genome.genes)
+        phenotype = sorted(individual.genome.genome)
         return phenotype
         
     @staticmethod
@@ -64,7 +64,8 @@ class Evolution:
         :param individual:
         :return: Individual's Phenotype
         """
-        phenotype = Model(individual.genome, normalized=True, static_population=100)
+        new_model = Model(individual.genome, normalized=True, static_population=1000)
+        phenotype = new_model.placeholder_simulate()
         return phenotype
     
     @staticmethod
@@ -76,7 +77,7 @@ class Evolution:
         """
         #   This is just placeholder stuff
         #   Send the phenotype to a function that calculates its fitness.
-        fitness = Fitness.placeholder_fitness(individual.phenotype)
+        fitness = Fitness.relative_spread_fitness(individual.phenotype)
         return fitness
 
     def select_parents(self):
@@ -104,7 +105,7 @@ class Evolution:
             #   Wrap the next loop in threads.
             for individual in self.population.individuals:
                 #   Create a phenotype from the individual's genotype.
-                individual.phenotype = self.incubate(individual)
+                individual.phenotype = self.incubate(individual.genome)
                 #   Evaluate the fitness of the individual.
                 individual.fitness = self.evaluate(individual)
             #   Do generational printout.
