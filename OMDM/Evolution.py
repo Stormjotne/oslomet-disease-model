@@ -7,6 +7,7 @@ from random import random, choice, shuffle
 
 from .Population import Population
 from .Individual import Individual
+from .Model import Model
 from . import Data, Fitness
 
 
@@ -45,7 +46,7 @@ class Evolution:
         print("\n")
 
     @staticmethod
-    def incubate(individual):
+    def placeholder_incubate(individual):
         """
         Generate a phenotype to be evaluated.
         :param individual:
@@ -54,6 +55,16 @@ class Evolution:
         #   Fake phenotype
         #   Just sorted genome
         phenotype = sorted(individual.genome.genes)
+        return phenotype
+        
+    @staticmethod
+    def incubate(individual):
+        """
+        Generate a phenotype to be evaluated by calling the Model object.
+        :param individual:
+        :return: Individual's Phenotype
+        """
+        phenotype = Model(individual.genome, normalized=True, static_population=100)
         return phenotype
     
     @staticmethod
@@ -76,52 +87,6 @@ class Evolution:
         self.population.individuals.sort(key=lambda element: element.fitness, reverse=True)
         best_individuals = self.population.individuals[:self.number_of_parents]
         return best_individuals
-    '''
-    def reproduce(self, parents, individuals):
-        """
-        Generate offspring and/or random mutations.
-        :param parents:
-        :param individuals:
-        :return: The Next Generation
-        """
-        individuals.sort(key=lambda element: element.fitness, reverse=True)
-        #   Individuals surviving to the next generation.
-        retained_adults = individuals[:self.surviving_individuals]
-        next_generation = retained_adults if retained_adults else []
-        i = 0
-        if self.do_crossover:
-            while len(next_generation) < self.population_size:
-                new_genes = self.crossover(parents[i].genome.genes, parents[i + 1].genome.genes)
-                next_generation.append(Individual(input_genome=new_genes))
-                i = (i + 2) % (len(parents) - 1)
-        else:
-            while len(next_generation) < self.population_size:
-                new_genes = self.clone(parents[i % self.number_of_parents].genome.genes)
-                next_generation.append(Individual(input_genome=new_genes))
-                i += 1
-        return next_generation
-    
-    def clone(self, parent_genome):
-        """
-        Create new genome from parent's genome with a chance of mutation.
-        :param parent_genome:
-        """
-        genes = []
-        for gene in parent_genome:
-            genes.append(random() if random() < self.mutation_probability else gene)
-        return genes
-
-    def crossover(self, parent_genome_one, parent_genome_two):
-        """
-        Create new genome from two parents' genomes with a chance of mutation.
-        :param parent_genome_one:
-        :param parent_genome_two:
-        """
-        genes = []
-        for gene1, gene2 in zip(parent_genome_one, parent_genome_two):
-            genes.append(random() if random() < self.mutation_probability else choice((gene1, gene2)))
-        return genes
-    '''
     
     def evolve(self, printout=False):
         """
