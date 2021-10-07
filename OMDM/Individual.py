@@ -36,7 +36,7 @@ class Individual:
         :param parent_genes:
         :type parent_genes:
         """
-        return Genome(self.mutation_probability, input_genes=parent_genes)
+        return Genome(self.mutation_probability, input_genome=parent_genes)
         
     def crossover(self, parent_genome_one, parent_genome_two):
         """
