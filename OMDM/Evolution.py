@@ -1,12 +1,13 @@
+"""
+
+"""
 from multiprocessing import Pool, current_process
 from time import sleep
 from random import random, choice, shuffle
 
-from Population import Population
-from Individual import Individual
-from Model import Model
-import Data
-import Fitness
+from .Population import Population
+from .Individual import Individual
+from . import Data, Fitness
 
 
 class Evolution:
@@ -29,7 +30,8 @@ class Evolution:
         self.best_individual = None
         self.generation = 0
         #   Initialize population
-        self.population = Population(self.population_size, self.genome_length)
+        self.population = Population(self.population_size, self.surviving_individuals, self.number_of_parents,
+            self.genome_length, self.mutation_probability, do_crossover=self.do_crossover)
 
     def print_population(self):
         """
@@ -37,10 +39,10 @@ class Evolution:
         Print the individual objects and their fitness score.
         """
         print("Generation number {}.\n".format(self.generation))
-        for individ in self.population.individuals:
-            print("Individual object: {}\nFitness: {}".format(individ, individ.fitness))
+        print("Generation Best: {}".format(self.population.individuals[0].fitness))
+        #   for individ in self.population.individuals:
+        #       print("Individual object: {}\nFitness: {}".format(individ, individ.fitness))
         print("\n")
-        sleep(1)
 
     @staticmethod
     def incubate(individual):
@@ -51,7 +53,7 @@ class Evolution:
         """
         #   Fake phenotype
         #   Just sorted genome
-        phenotype = sorted(individual.genotype)
+        phenotype = sorted(individual.genome.genes)
         return phenotype
     
     @staticmethod
@@ -66,16 +68,15 @@ class Evolution:
         fitness = Fitness.placeholder_fitness(individual.phenotype)
         return fitness
 
-    def select_parents(self, individuals):
+    def select_parents(self):
         """
         Select a number of best individuals to serve as the basis for the next generation.
-        :param individuals:
         :return: The best Individuals
         """
-        individuals.sort(key=lambda element: element.fitness, reverse=True)
-        best_individuals = individuals[:self.number_of_parents]
+        self.population.individuals.sort(key=lambda element: element.fitness, reverse=True)
+        best_individuals = self.population.individuals[:self.number_of_parents]
         return best_individuals
-    
+    '''
     def reproduce(self, parents, individuals):
         """
         Generate offspring and/or random mutations.
@@ -90,13 +91,13 @@ class Evolution:
         i = 0
         if self.do_crossover:
             while len(next_generation) < self.population_size:
-                new_genome = self.crossover(parents[i].genotype, parents[i + 1].genotype)
-                next_generation.append(Individual(genotype=new_genome))
+                new_genes = self.crossover(parents[i].genome.genes, parents[i + 1].genome.genes)
+                next_generation.append(Individual(input_genome=new_genes))
                 i = (i + 2) % (len(parents) - 1)
         else:
             while len(next_generation) < self.population_size:
-                new_genome = self.clone(parents[i % self.number_of_parents].genotype)
-                next_generation.append(Individual(genotype=new_genome))
+                new_genes = self.clone(parents[i % self.number_of_parents].genome.genes)
+                next_generation.append(Individual(input_genome=new_genes))
                 i += 1
         return next_generation
     
@@ -105,10 +106,10 @@ class Evolution:
         Create new genome from parent's genome with a chance of mutation.
         :param parent_genome:
         """
-        genome = []
+        genes = []
         for gene in parent_genome:
-            genome.append(random() if random() < self.mutation_probability else gene)
-        return genome
+            genes.append(random() if random() < self.mutation_probability else gene)
+        return genes
 
     def crossover(self, parent_genome_one, parent_genome_two):
         """
@@ -116,10 +117,11 @@ class Evolution:
         :param parent_genome_one:
         :param parent_genome_two:
         """
-        genome = []
+        genes = []
         for gene1, gene2 in zip(parent_genome_one, parent_genome_two):
-            genome.append(random() if random() < self.mutation_probability else choice((gene1, gene2)))
-        return genome
+            genes.append(random() if random() < self.mutation_probability else choice((gene1, gene2)))
+        return genes
+    '''
     
     def evolve(self, printout=False):
         """
@@ -131,25 +133,28 @@ class Evolution:
         Populate the next generation by reproduction.
         """
         if printout:
-            print("The goal of this EA is to converge the mean value in the genome to a certain target value,"
-                  " with as little variance as possible.")
-            sleep(5)
-            print("You'll see at the end that the phenotype will be a sorted list"
-                  " where the mean value is very close to 0.5 with (hopefully) very little variance.")
-            sleep(5)
             print("Starting evolution.")
             sleep(2)
         while self.generation < self.number_of_generations:
+            #   Wrap the next loop in threads.
             for individual in self.population.individuals:
+                #   Create a phenotype from the individual's genotype.
                 individual.phenotype = self.incubate(individual)
+                #   Evaluate the fitness of the individual.
                 individual.fitness = self.evaluate(individual)
-            #   Print all individuals and their fitness
+            #   Do generational printout.
             if printout:
                 self.print_population()
-            parents = self.select_parents(self.population.individuals)
+            #   Select the parents of the next generations.
+            #   This method also currently sorts the population by fitness.
+            parents = self.select_parents()
+            #   Save a pointer to the best individual.
             self.best_individual = self.population.individuals[0]
-            self.population.individuals = self.reproduce(parents, self.population.individuals)
+            #   Update the next generation by reproduction.
+            self.population.individuals = self.population.reproduce(parents)
+            #   Iterate
             self.generation += 1
+        #   Return the best individual or whatever else at the end.
         return self.best_individual
 
 

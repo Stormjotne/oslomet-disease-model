@@ -1,12 +1,10 @@
-from math import fabs
-from statistics import median, mean, pvariance
-
-import Data
-
-
 """
 A script containing functions for calculating the fitness score of an individual.
 """
+from math import fabs
+from statistics import median, mean, pvariance
+
+from . import Data
 
 
 def placeholder_fitness(input_phenotype):
