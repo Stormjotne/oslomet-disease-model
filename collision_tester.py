@@ -25,7 +25,7 @@ D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
 
 nr_of_agents = 100
 agent_list_infected = np.random.rand(nr_of_agents) > 1
-agent_list_infected[0] = 1
+agent_list_infected[0] = 0
 agent_list_susceptible = np.ones(nr_of_agents)
 
 
@@ -34,7 +34,6 @@ infected_positions = np.where(agent_list_infected == 1)
 
 velocity = (np.random.rand(2, nr_of_agents)-0.5)*2
 velocity_length = np.linalg.norm(velocity, ord=2, axis=0)
-print(velocity_length)
 world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
 world_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
 infection_range = 5
