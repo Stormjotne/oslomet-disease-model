@@ -97,6 +97,7 @@ class Genome:
     def uniform_zip_genes(self, input_genes_one, input_genes_two):
         """
         Uniform combination of two parent genomes with chance of mutation.
+        (Crossover)
         :param input_genes_one:
         :type input_genes_one:
         :param input_genes_two:
