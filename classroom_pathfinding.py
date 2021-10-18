@@ -6,7 +6,7 @@ import cv2
 import time
 #import constants
 from pathfinding import make_grid, find_path
-from constants import world_size, pathfinding_range, proximity_infection_chance, surface_infection_chance,self_infection_chance
+from constants import world_size, pathfinding_range, proximity_infection_chance, surface_infection_chance,self_infection_chance,mask_protection_rate
 
 from small_classroom_destinations import destinations
 from hardcoded_classrooms import create_map
@@ -51,6 +51,9 @@ positions[1][0] = 30.0
 positions[0][4] = 101.0
 positions[1][4] = 31.0
 
+positions[0][7] = 102.0
+positions[1][7] = 29.0
+
 # toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
 agent_movement_mode = np.zeros(nr_of_agents)
 #agent_movement_mode[1] = 1
@@ -61,6 +64,7 @@ agent_vector_pathfinding = np.ones(nr_of_agents)
 
 # toggle if an agent has a facemask on or off
 agent_face_mask = np.zeros(nr_of_agents)
+agent_face_mask[4] = 1
 
 # the start and end node for the invisible path
 hidden_start = np.array([[100], [30]])
@@ -213,9 +217,23 @@ while True:
         print("")
         infections_where = np.array(np.where(infections == 1))
         print(infections_where)
-        if random.random() <= proximity_infection_chance:
-            agent_list_infected[infection_cases[1, infections_where]] = 1
-            agent_list_susceptible[infection_cases[1, infections_where]] = 0
+        print("")
+        print("Length: " + str(len(infections_where[0])))
+        #print(len(infections_where[0]))
+        for i in range(len(infections_where[0])):
+
+            if agent_face_mask[infection_cases[1, infections_where[0][i]]] == 1:
+                if random.random() <= proximity_infection_chance:
+                    agent_list_infected[infection_cases[1,infections_where[0][i]]] = 1
+                    agent_list_susceptible[infection_cases[1, infections_where[0][i]]] = 0
+
+                #agent_list_infected[infection_cases[1, infections_where]] = 1
+                #agent_list_susceptible[infection_cases[1, infections_where]] = 0
+
+            if agent_face_mask[infection_cases[1, infections_where[0][i]]] == 0:
+                if random.random() <= proximity_infection_chance * (1.0-mask_protection_rate):
+                    agent_list_infected[infection_cases[1,infections_where[0][i]]] = 1
+                    agent_list_susceptible[infection_cases[1, infections_where[0][i]]] = 0
 
     if dispersion_cases.shape[1] >= 1:
     # This would be where you implement social distancing as a force moving agent apart.
