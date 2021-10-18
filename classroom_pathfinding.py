@@ -7,7 +7,7 @@ import time
 #import constants
 from pathfinding import make_grid, find_path
 from constants import world_size, pathfinding_range, proximity_infection_chance, surface_infection_chance,self_infection_chance,mask_protection_rate
-
+from variables import wears_mask_percentage
 from small_classroom_destinations import destinations
 from hardcoded_classrooms import create_map
 
@@ -64,7 +64,12 @@ agent_vector_pathfinding = np.ones(nr_of_agents)
 
 # toggle if an agent has a facemask on or off
 agent_face_mask = np.zeros(nr_of_agents)
-agent_face_mask[4] = 1
+# find the amount of agents that wear masks based on the % of the whole population
+amount_wearing_masks = int(wears_mask_percentage * nr_of_agents)
+# randomly choose the amount
+agent_face_mask[np.random.choice(nr_of_agents,amount_wearing_masks,False)] = 1
+
+#agent_face_mask[4] = 1
 
 # the start and end node for the invisible path
 hidden_start = np.array([[100], [30]])
@@ -166,7 +171,7 @@ while True:
     #print(infected_surfaces)
     # temporary for loop, need optimilization.
     # finding out if an infected agent has contact with a surface that he can infect.
-    for i in range(len(infected_surfaces[0])):
+    '''for i in range(len(infected_surfaces[0])):
         matches = [False]
         if infected_surfaces_map[infected_surfaces[0][i]][infected_surfaces[1][i]] > 0:
             y_component = np.equal(positions[0].astype(np.int32),infected_surfaces[0][i])
@@ -207,7 +212,7 @@ while True:
             if random.random() <= self_infection_chance * agent_list_infected_hands[agent]:
                 agent_list_infected[agent] = 1
                 agent_list_susceptible[agent] = 0
-
+    '''
 
     if infection_cases.shape[1] >= 1:
         print(infection_cases)
