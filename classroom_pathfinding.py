@@ -93,7 +93,17 @@ infected_positions = np.array(positions[:, infected_positions])
 velocity = (np.random.rand(2, nr_of_agents)-0.5)*2
 velocity_length = np.linalg.norm(velocity, ord=2, axis=0)
 
+#Adding agents to map for wall interaction
 world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
+
+
+#Creating a map for collision avoidance
+collision_map= np.zeros((world_size,world_size))
+
+#Adding agents to this map
+collision_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
+
+
 
 infection_range = 3
 velocity_range = 10
@@ -220,16 +230,29 @@ while True:
 
     # random movement:
     if random_movement == 1:
-        # wall interaction
+        # wall and agent interaction
         for i0 in range(nr_of_agents):
             wall_perception = world_map[
-                      (positions[0, i0] - max_speed).astype(np.int32):(positions[0, i0] + max_speed + 1).astype(
-                          np.int32),
-                      (positions[1, i0] - max_speed).astype(np.int32):(positions[1, i0] + max_speed + 1).astype(
-                          np.int32)]
-            wall_location = np.array(np.where(wall_perception > 0))
+                              (positions[0, i0] - max_speed).astype(np.int32):(
+                                      positions[0, i0] + max_speed + 1).astype(
+                                  np.int32),
+                              (positions[1, i0] - max_speed).astype(np.int32):(
+                                      positions[1, i0] + max_speed + 1).astype(
+                                  np.int32)]
+            agent_percetion = collision_map[
+                              (positions[0, i0] - dispersion_range).astype(np.int32):(
+                                      positions[0, i0] + dispersion_range + 1).astype(
+                                  np.int32),
+                              (positions[1, i0] - dispersion_range).astype(np.int32):(
+                                      positions[1, i0] + dispersion_range + 1).astype(
+                                  np.int32)]
+
+            # Looking for values of walls and agents
+            wall_location = np.array(np.where(wall_perception == 20))
+            agent_location = np.array(np.where(agent_percetion == 10))
             # subtract max speed to make the values relative to the center
             wall_location -= max_speed
+            agent_location -= dispersion_range
 
             # hidden path interaction
             path_location = np.zeros((2, 1))
@@ -251,12 +274,13 @@ while True:
                     path_location = np.array(np.where(hidden_path_perception == highest_value))
                     path_location -= pathfinding_range
 
-
+            #Subtracting velocity from agent i0 equals to sum of agent_location array
+            velocity[:, i0] -= np.sum(agent_location, 1) * 5
+            # Subtracting velocity from agent i0 equals to sum of wall_location array
             velocity[:, i0] -= np.sum(wall_location, 1) * 10
-            # print(velocity)
 
             velocity[:, i0] += np.sum(path_location, 1) * 30
-            # print(velocity)
+
 
         velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 2
         velocity_length[:] = np.linalg.norm(velocity, ord=2, axis=0)
@@ -304,6 +328,12 @@ while True:
     # print(infected_positions)
     world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
     nr_of_infected.append(np.sum(agent_list_infected))
+
+    # Erasing old positions
+    collision_map[:, :] = 0
+    # Updating new positions
+    collision_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
+
 
     dim = (600, 600)
 

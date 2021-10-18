@@ -141,6 +141,7 @@ velocity_range = 10
 attraction_range = 20
 dispersion_range = 5
 
+
 max_speed = 2
 
 nr_of_infected = []
@@ -250,13 +251,13 @@ while True:
                     path_location -= pathfinding_range
 
             # Subtracting the sum of distances from velocity of agent i0
-            velocity[:, i0] -= np.sum(wall_location, 1) * 10  # This is where a force multiplier can be added
-            velocity[:, i0] -= np.sum(agent_location, 1) * 5  # This is where a force multiplier can be added
+            velocity[:, i0] -= np.sum(wall_location, 1) *8 # This is where a force multiplier can be added
+            velocity[:, i0] -= np.sum(agent_location, 1) * 4  # This is where a force multiplier can be added
 
             velocity[:, i0] += np.sum(path_location, 1) * 30
             # print(velocity)
 
-        velocity += (np.random.rand(2, nr_of_agents) - 0.5) *0.2 #Lower the number, smaller the direction change
+        velocity += (np.random.rand(2, nr_of_agents) - 0.5) *0.5 #Lower the number, smaller the change oin direction
         velocity_length[:] = np.linalg.norm(velocity, ord=2, axis=0)
         velocity *= max_speed / velocity_length
 
