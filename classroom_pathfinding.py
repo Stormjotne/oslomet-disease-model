@@ -131,16 +131,25 @@ def calculate_path(nr_of_agents, grid, world_map, world_size, positions, destina
         p[i] = find_path(grid, world_map, world_size, positions[0][i], positions[1][i], destinations[0][i], destinations[1][i])
     return p
 
+#Calculating nr of iterations by defining how many days to simulate
+days = 0.01
+hours = days*24
+minutes = hours*60
+ite_per_min = 20
+iterations = minutes*ite_per_min
 
 random_movement = 1
 count = 0
 minute = 0
 hour = 0
 hand_infection_count = 0
-
+ite=0
 while True:
 
-
+    ite=ite+1
+    if ite==iterations:
+        print(ite)
+        break;
     p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
     p_2 = np.rot90(p_1, axes=(1, 2))
     p_1 -= p_2
@@ -162,7 +171,7 @@ while True:
     #print(infected_surfaces)
     # temporary for loop, need optimilization.
     # finding out if an infected agent has contact with a surface that he can infect.
-    for i in range(len(infected_surfaces[0])):
+    '''for i in range(len(infected_surfaces[0])):
         matches = [False]
         if infected_surfaces_map[infected_surfaces[0][i]][infected_surfaces[1][i]] > 0:
             y_component = np.equal(positions[0].astype(np.int32),infected_surfaces[0][i])
@@ -203,16 +212,14 @@ while True:
             if random.random() <= self_infection_chance * agent_list_infected_hands[agent]:
                 agent_list_infected[agent] = 1
                 agent_list_susceptible[agent] = 0
-
+    '''
 
     if infection_cases.shape[1] >= 1:
-        print(infection_cases)
-        print("")
+
         infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-        print(infections)
-        print("")
+
         infections_where = np.array(np.where(infections == 1))
-        print(infections_where)
+
         if random.random() <= proximity_infection_chance:
             agent_list_infected[infection_cases[1, infections_where]] = 1
             agent_list_susceptible[infection_cases[1, infections_where]] = 0
