@@ -1,12 +1,36 @@
-from math import fabs
-from statistics import median, mean, pvariance
-
-import Data
-
-
 """
 A script containing functions for calculating the fitness score of an individual.
 """
+from math import fabs
+from statistics import median, mean, pvariance
+
+from . import Data
+
+
+def population_spread_fitness(input_phenotype):
+	"""
+	Reward high population of agents, punish high spread of disease.
+	:param input_phenotype:
+	:type input_phenotype:
+	:return:
+	:rtype:
+	"""
+	pass
+	
+
+def relative_spread_fitness(input_phenotype):
+	"""
+	Punish high spread of disease.
+	:param input_phenotype:
+	:type input_phenotype:
+	:return:
+	:rtype:
+	"""
+	infected = input_phenotype["number_total_infected"]
+	#  infected = input_phenotype["number_currently_infected"]
+	agents = input_phenotype["number_of_agents"]
+	relative_spread = infected / agents
+	return 1 - relative_spread
 
 
 def placeholder_fitness(input_phenotype):
