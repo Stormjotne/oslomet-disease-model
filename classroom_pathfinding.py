@@ -45,8 +45,11 @@ agent_list_infected_hands = np.zeros(nr_of_agents)
 positions = np.random.rand(2, nr_of_agents)*world_size
 #positions = np.array([[160.0,250.0], [255.0,260]])
 
-positions[0][0] = 160.0
-positions[1][0] = 255.0
+positions[0][0] = 100.0
+positions[1][0] = 30.0
+
+positions[0][4] = 101.0
+positions[1][4] = 31.0
 
 # toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
 agent_movement_mode = np.zeros(nr_of_agents)
@@ -55,6 +58,9 @@ agent_movement_mode = np.zeros(nr_of_agents)
 # toggle vector based pathfinding during random movement on or off.
 agent_vector_pathfinding = np.ones(nr_of_agents)
 # agent_vector_pathfinding[:] = 0
+
+# toggle if an agent has a facemask on or off
+agent_face_mask = np.zeros(nr_of_agents)
 
 # the start and end node for the invisible path
 hidden_start = np.array([[100], [30]])
@@ -190,9 +196,13 @@ while True:
 
 
     if infection_cases.shape[1] >= 1:
+        print(infection_cases)
+        print("")
         infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        print(infections)
+        print("")
         infections_where = np.array(np.where(infections == 1))
-
+        print(infections_where)
         if random.random() <= proximity_infection_chance:
             agent_list_infected[infection_cases[1, infections_where]] = 1
             agent_list_susceptible[infection_cases[1, infections_where]] = 0
