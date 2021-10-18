@@ -137,15 +137,18 @@ hours = days*24
 minutes = hours*60
 ite_per_min = 20
 iterations = minutes*ite_per_min
+ite=0 #counting variable for simulation
+
 
 random_movement = 1
 count = 0
 minute = 0
 hour = 0
 hand_infection_count = 0
-ite=0
+
 while True:
 
+    #ite is counting number of iterations and if statement true-> finish simulation
     ite=ite+1
     if ite==iterations:
         print(ite)
@@ -282,9 +285,9 @@ while True:
                     path_location -= pathfinding_range
 
             #Subtracting velocity from agent i0 equals to sum of agent_location array
-            velocity[:, i0] -= np.sum(agent_location, 1) * 5
+            velocity[:, i0] -= np.sum(agent_location, 1) * 8
             # Subtracting velocity from agent i0 equals to sum of wall_location array
-            velocity[:, i0] -= np.sum(wall_location, 1) * 10
+            velocity[:, i0] -= np.sum(wall_location, 1) * 4
 
             velocity[:, i0] += np.sum(path_location, 1) * 30
 
