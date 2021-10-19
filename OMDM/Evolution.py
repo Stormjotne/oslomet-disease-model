@@ -66,7 +66,7 @@ class Evolution:
         :param individual:
         :return: Individual's Phenotype
         """
-        new_model = Model(individual.genome.genome, normalized=True, static_population=1000)
+        new_model = Model(individual.genome.genome, normalized=True, static_population=False)
         phenotype = new_model.placeholder_simulate()
         return phenotype
     
@@ -78,7 +78,8 @@ class Evolution:
         :return: Individual's Fitness
         """
         #   Send the phenotype to a function that calculates its fitness.
-        fitness = Fitness.relative_spread_fitness(individual.phenotype)
+        #   fitness = Fitness.relative_spread_fitness(individual.phenotype)
+        fitness = Fitness.population_spread_fitness(individual.phenotype, 5000, 1, 1)
         return fitness
     
     def generate(self, individual):
@@ -126,14 +127,14 @@ class Evolution:
                     #   Evaluate the fitness of the individual.
                     individual.fitness = self.evaluate(individual)'''
             #   Use multiprocessing.Pool to generate phenotype and fitness score in parallel.
-            with Pool(self.number_of_threads) as p:
+            with Pool(self.number_of_threads) as process_pool:
                 if self.printout:
                     print("\nGeneration number {}.".format(self.generation))
                     print(current_process(), end=" ")
                 #   Straight up overwrite population with updated individuals
                 #   Maybe there's a nicer way
-                self.population.individuals = p.map(self.generate, self.population.individuals)
-                p.close()
+                self.population.individuals = process_pool.map(self.generate, self.population.individuals)
+                process_pool.close()
             #   Do generational printout.
             if self.printout:
                 self.print_population()

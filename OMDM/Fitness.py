@@ -7,16 +7,27 @@ from statistics import median, mean, pvariance
 from . import Data
 
 
-def population_spread_fitness(input_phenotype):
+def population_spread_fitness(input_phenotype, desired_population, population_weight, spread_weight):
 	"""
 	Reward high population of agents, punish high spread of disease.
+	:param spread_weight:
+	:param population_weight:
+	:param desired_population:
 	:param input_phenotype:
 	:type input_phenotype:
 	:return:
 	:rtype:
 	"""
-	pass
-	
+	infected = input_phenotype["number_total_infected"]
+	#	Pc
+	current_population = input_phenotype["number_of_agents"]
+	relative_population = current_population / desired_population
+	#	infected = input_phenotype["number_currently_infected"]
+	relative_spread = infected / current_population
+	#	return population_weight * (1 - relative_population) + relative_spread * spread_weight
+	#	Minimization above
+	return 1 - (population_weight * (1 - relative_population) + relative_spread * spread_weight)
+
 
 def relative_spread_fitness(input_phenotype):
 	"""
