@@ -44,10 +44,9 @@ agent_list_infected_hands = np.zeros(nr_of_agents)
 
 #positions = np.random.rand(2, nr_of_agents)*world_size
 positions=np.zeros((2,nr_of_agents))
-#positions[:,:] = 100
+
 print(positions)
 
-#positions = np.array([[160.0,250.0], [255.0,260]])
 '''
 positions[0][0] = 100.0
 positions[1][0] = 30.0
@@ -60,20 +59,20 @@ positions[1][7] = 29.0
 '''
 # toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
 agent_movement_mode = np.zeros(nr_of_agents)
-#agent_movement_mode[1] = 1
+
 
 # toggle vector based pathfinding during random movement on or off.
 agent_vector_pathfinding = np.ones(nr_of_agents)
-# agent_vector_pathfinding[:] = 0
+
 
 # toggle if an agent has a facemask on or off
 agent_face_mask = np.zeros(nr_of_agents)
+
 # find the amount of agents that wear masks based on the % of the whole population
 amount_wearing_masks = int(wears_mask_percentage * nr_of_agents)
+
 # randomly choose the amount
 agent_face_mask[np.random.choice(nr_of_agents,amount_wearing_masks,False)] = 1
-
-#agent_face_mask[4] = 1
 
 # the start and end node for the invisible path
 hidden_start = np.array([[100], [30]])
@@ -81,16 +80,11 @@ hidden_start = np.array([[100], [30]])
 # hidden_end = np.array([[270], [150]])
 hidden_end = np.array([[120], [110]])
 
-
 # creates the invisible path for vector path-following
 hidden_path = []
 
 if not hidden_path:
     hidden_path = find_path(grid, world_map, world_size, hidden_start[0][0], hidden_start[1][0], hidden_end[0][0], hidden_end[1][0])
-
-#print(hidden_path)
-#print(len(hidden_path))
-
 
 for i in range(len(hidden_path)):
 
@@ -101,12 +95,9 @@ for i in range(len(hidden_path)):
 
 infected_positions = np.array(np.where(agent_list_infected == 1))
 infected_positions = np.array(positions[:, infected_positions])
-#print(infected_positions)
 
-velocity = (np.random.rand(2, nr_of_agents)-0.5)*2
+velocity = np.zeros((2,nr_of_agents))
 velocity_length = np.linalg.norm(velocity, ord=2, axis=0)
-
-
 
 #Adding agents to map for wall interaction
 #world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
@@ -151,8 +142,10 @@ days = 10
 hours = days*24
 minutes = hours*60
 ite_per_min = 20
-iterations = minutes*ite_per_min
-ite=0#counting variable for simulation
+total_iterations = minutes*ite_per_min
+
+#counting variable for simulation
+iteration_counter=0
 
 
 random_movement = 1
@@ -162,28 +155,35 @@ hour = 0
 hand_infection_count = 0
 
 #Creating an array of values to use for spawning agents at every hundred iteration
+ite_between = 20
 spawn_array = np.full((nr_of_agents),None)
 for i in range(nr_of_agents):
-    spawn_array[i] = i*100
+    spawn_array[i] = i*ite_between
 
 #Counting variable for initiating agent spawning at defined position
-infection_counter=0
+spawning_counter=0
 
 while True:
 
-    if np.any(spawn_array[:]==ite):
-        positions[0,infection_counter]=400
-        positions[1,infection_counter]=300
-        infection_counter = infection_counter + 1
+    if np.any(spawn_array[:]==iteration_counter):
+
+        positions[0,spawning_counter]=350
+        positions[1,spawning_counter]=300
+        velocity[0,spawning_counter]=-5
+        velocity[1,spawning_counter]=-6
+        spawning_counter = spawning_counter + 1
+        print(spawning_counter)
+
     #ite is counting number of iterations and if statement true-> finish simulation
-    ite=ite+1
-    if ite==iterations:
-        print(ite)
+    iteration_counter=iteration_counter+1
+    if iteration_counter==total_iterations:
+        print(iteration_counter)
         break;
+
+    #Matrices to calculate distances between agents by using positions at each iteration
     p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
     p_2 = np.rot90(p_1, axes=(1, 2))
     p_1 -= p_2
-
 
     distances = np.linalg.norm(p_1, axis=0)
     distances[np.arange(nr_of_agents), np.arange(nr_of_agents)] = infection_range + 20
@@ -286,7 +286,7 @@ while True:
     # random movement:
     if random_movement == 1:
         # wall and agent interaction
-        for i0 in range(nr_of_agents):
+        for i0 in range(nr_of_agents): #Try to replace nr_of_agents with spawning counter-1
             wall_perception = world_map[
                               (positions[0, i0] - max_speed).astype(np.int32):(
                                       positions[0, i0] + max_speed + 1).astype(
@@ -330,11 +330,12 @@ while True:
                     path_location -= pathfinding_range
 
             #Subtracting velocity from agent i0 equals to sum of agent_location array
-            velocity[:, i0] -= np.sum(agent_location, 1) * 8
-            # Subtracting velocity from agent i0 equals to sum of wall_location array
-            velocity[:, i0] -= np.sum(wall_location, 1) * 4
+            if np.any(velocity[:,i0]!= 0) :
+                velocity[:, i0] -= np.sum(agent_location, 1) * 8
+                # Subtracting velocity from agent i0 equals to sum of wall_location array
+                velocity[:, i0] -= np.sum(wall_location, 1) * 4
 
-            velocity[:, i0] += np.sum(path_location, 1) * 30
+                velocity[:, i0] += np.sum(path_location, 1) * 30
 
 
         velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 2
