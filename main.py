@@ -12,7 +12,7 @@ hyper_parameters = {
     "genome_length": 9,
     "mutation_probability": 0.2,
     "do_crossover": True,
-    "population_size": 60,
+    "population_size": 10,
     "surviving_individuals": 10,
     "number_of_parents": 10
 }
