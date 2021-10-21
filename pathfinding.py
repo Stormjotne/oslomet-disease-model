@@ -90,6 +90,46 @@ def find_walls(grid, world_map, world_size):
                 cell = grid[i][j]
                 cell.make_wall()
 
+                #test of anti wall-hugging
+                for extra in range(1,10):
+
+                    if i-extra > 0 and j-extra > 0:
+                        cell = grid[i-extra][j-extra]
+                        cell.make_wall()
+
+                    if i-extra > 0:
+                        cell = grid[i-extra][j]
+                        cell.make_wall()
+
+                    if i-extra > 0 and j+extra < world_size:
+                        cell = grid[i-extra][j+extra]
+                        cell.make_wall()
+
+                    # middle row
+                    if j + extra < world_size:
+
+                        cell = grid[i][j+extra]
+                        cell.make_wall()
+
+                    if j-extra > 0:
+                        cell = grid[i][j-extra]
+                        cell.make_wall()
+
+                    #bottom row
+                    if i+extra < world_size and j-extra > 0:
+                        cell = grid[i+extra][j-extra]
+                        cell.make_wall()
+
+                    if i + extra < world_size:
+                        cell = grid[i + extra][j]
+                        cell.make_wall()
+
+                    if i + extra < world_size and j+extra < world_size:
+                        cell = grid[i + extra][j + extra]
+                        cell.make_wall()
+
+
+
     return
 
 
