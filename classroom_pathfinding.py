@@ -137,6 +137,16 @@ def calculate_path(nr_of_agents, grid, world_map, world_size, positions, destina
         p[i] = find_path(grid, world_map, world_size, positions[0][i], positions[1][i], destinations[0][i], destinations[1][i])
     return p
 
+# a functions that removes infection from all surfaces.
+def desinfect_surfaces(infected_surfaces_map, surfaces):
+    for i in range(len(surfaces[0])):
+        y = surfaces[0][i]
+        x = surfaces[1][i]
+        infected_surfaces_map[y][x] = 0
+
+    return infected_surfaces_map
+
+
 #Calculating nr of iterations by defining how many days to simulate
 days = 0.1
 hours = days*8.0
@@ -245,6 +255,16 @@ while True:
     '''
 
     if infection_cases.shape[1] >= 1:
+        #print(infection_cases)
+        #print("")
+        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        #print(infections)
+        #print("")
+        infections_where = np.array(np.where(infections == 1))
+        #print(infections_where)
+        #print("")
+        #print("Length: " + str(len(infections_where[0])))
+        #print(len(infections_where[0]))
 
         infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
 
@@ -286,6 +306,22 @@ while True:
     # random movement:
     if random_movement == 1:
         # wall and agent interaction
+        for i0 in range(nr_of_agents):
+
+            infected_surface_perception = infected_surfaces_map[
+                                          (positions[0, i0] - 1).astype(np.int32):(
+                                              positions[0, i0] + 2).astype(
+                                      np.int32),
+                                  (positions[1, i0] - 1).astype(np.int32):(
+                                              positions[1, i0] + 2).astype(
+                                      np.int32)]
+
+
+
+            #print(infected_surface_perception)
+            #print("")
+
+
         for i0 in range(nr_of_agents): #Try to replace nr_of_agents with spawning counter-1
             wall_perception = world_map[
                               (positions[0, i0] - max_speed).astype(np.int32):(
@@ -302,12 +338,42 @@ while True:
                                       positions[1, i0] + dispersion_range + 1).astype(
                                   np.int32)]
 
+
             # Looking for values of walls and agents
             wall_location = np.array(np.where(wall_perception == 20))
             agent_location = np.array(np.where(agent_percetion == 10))
+
+            infected_surfaces_location = np.array(np.where(infected_surface_perception>=0))
             # subtract max speed to make the values relative to the center
             wall_location -= max_speed
             agent_location -= dispersion_range
+            infected_surfaces_location -= 1
+
+            #if (len(infected_surfaces_location[0]))>0:
+                #print(infected_surfaces_location)
+                #print("")
+
+            if len(infected_surfaces_location[0]) > 0:
+                if agent_list_infected[i0] == 1:
+                    for i in range(len(infected_surfaces_location[0])):
+                        y = positions[0][i0].astype(np.int32) + infected_surfaces_location[0][i]
+                        x = positions[1][i0].astype(np.int32) + infected_surfaces_location[1][i]
+                        infected_surfaces_map[y][x] += 1
+                if agent_list_infected[i0] == 0:
+                    virus_amount = int(np.amax(infected_surface_perception, initial=0)/2)
+                    #print(virus_amount)
+                    if random.random() <= (surface_infection_chance * virus_amount):
+                        agent_list_infected_hands[i0] = virus_amount
+                #print(infected_surface_perception)
+            print(agent_list_infected_hands)
+            if np.any(agent_list_infected_hands > 0):
+                infected_hands = np.array(np.where(agent_list_infected_hands > 0))
+                print("yes")
+                print(infected_hands)
+                for agent in infected_hands[0]:
+                    if random.random() <= self_infection_chance * agent_list_infected_hands[agent]:
+                        agent_list_infected[agent] = 1
+                        agent_list_susceptible[agent] = 0
 
             # hidden path interaction
             path_location = np.zeros((2, 1))
