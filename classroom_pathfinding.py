@@ -10,7 +10,7 @@ from constants import world_size, pathfinding_range, proximity_infection_chance,
 from variables import wears_mask_percentage
 from small_classroom_destinations import destinations
 from hardcoded_classrooms import create_map
-
+beginning_time= time.time()
 # world size, 300 for single class room view, 500/1000 for more building space
 world = np.zeros((world_size, world_size, 3))
 
@@ -138,10 +138,10 @@ def calculate_path(nr_of_agents, grid, world_map, world_size, positions, destina
     return p
 
 #Calculating nr of iterations by defining how many days to simulate
-days = 10
-hours = days*24
-minutes = hours*60
-ite_per_min = 20
+days = 0.1
+hours = days*8.0
+minutes = hours*60.0
+ite_per_min = 20.0
 total_iterations = minutes*ite_per_min
 
 #counting variable for simulation
@@ -174,7 +174,7 @@ while True:
         spawning_counter = spawning_counter + 1
         print(spawning_counter)
 
-    #ite is counting number of iterations and if statement true-> finish simulation
+    #if statement true-> finish simulation
     iteration_counter=iteration_counter+1
     if iteration_counter==total_iterations:
         print(iteration_counter)
@@ -330,15 +330,15 @@ while True:
                     path_location -= pathfinding_range
 
             #Subtracting velocity from agent i0 equals to sum of agent_location array
-            if np.any(velocity[:,i0]!= 0) :
-                velocity[:, i0] -= np.sum(agent_location, 1) * 8
-                # Subtracting velocity from agent i0 equals to sum of wall_location array
-                velocity[:, i0] -= np.sum(wall_location, 1) * 4
 
-                velocity[:, i0] += np.sum(path_location, 1) * 30
+            velocity[:, i0] -= np.sum(agent_location, 1) * 8
+            # Subtracting velocity from agent i0 equals to sum of wall_location array
+            velocity[:, i0] -= np.sum(wall_location, 1) * 4
+
+            velocity[:, i0] += np.sum(path_location, 1) * 30
 
 
-        velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 2
+        velocity += (np.random.rand(2, nr_of_agents) - 0.5) * 0.5
         velocity_length[:] = np.linalg.norm(velocity, ord=2, axis=0)
         velocity *= max_speed / velocity_length
 
@@ -346,7 +346,10 @@ while True:
         cancel_velocity = np.array(np.where(agent_movement_mode == 1))
         for vel in cancel_velocity:
             velocity[:, vel] = 0
-
+        #
+        stay= np.array(np.where(positions==0))
+        for value in stay:
+            velocity[:,value] = 0
         # update all agent positions with velocity
         positions += velocity
 
@@ -383,6 +386,7 @@ while True:
     infected_positions = np.array(positions[:, infected_positions])
     # print(infected_positions)
     world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
+
     nr_of_infected.append(np.sum(agent_list_infected))
 
     # Erasing old positions
@@ -398,7 +402,7 @@ while True:
     cv2.imshow('frame', world_resized)
 
     #time.sleep(0.05)
-
+    print(time.time()-beginning_time)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
