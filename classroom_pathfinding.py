@@ -215,15 +215,15 @@ while True:
     '''
 
     if infection_cases.shape[1] >= 1:
-        print(infection_cases)
-        print("")
+        #print(infection_cases)
+        #print("")
         infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-        print(infections)
-        print("")
+        #print(infections)
+        #print("")
         infections_where = np.array(np.where(infections == 1))
-        print(infections_where)
-        print("")
-        print("Length: " + str(len(infections_where[0])))
+        #print(infections_where)
+        #print("")
+        #print("Length: " + str(len(infections_where[0])))
         #print(len(infections_where[0]))
         for i in range(len(infections_where[0])):
 
@@ -255,6 +255,21 @@ while True:
     if random_movement == 1:
         # wall and agent interaction
         for i0 in range(nr_of_agents):
+
+            infected_surface_perception = infected_surfaces_map[
+                                          (positions[0, i0] - 1).astype(np.int32):(
+                                              positions[0, i0] + 2).astype(
+                                      np.int32),
+                                  (positions[1, i0] - 1).astype(np.int32):(
+                                              positions[1, i0] + 2).astype(
+                                      np.int32)]
+
+
+
+            #print(infected_surface_perception)
+            #print("")
+
+
             wall_perception = world_map[
                               (positions[0, i0] - max_speed).astype(np.int32):(
                                       positions[0, i0] + max_speed + 1).astype(
@@ -270,12 +285,35 @@ while True:
                                       positions[1, i0] + dispersion_range + 1).astype(
                                   np.int32)]
 
+
             # Looking for values of walls and agents
             wall_location = np.array(np.where(wall_perception == 20))
             agent_location = np.array(np.where(agent_percetion == 10))
+
+            infected_surfaces_location = np.array(np.where(infected_surface_perception>=0))
             # subtract max speed to make the values relative to the center
             wall_location -= max_speed
             agent_location -= dispersion_range
+            infected_surfaces_location -= 1
+
+            if (len(infected_surfaces_location[0]))>0:
+                print(infected_surfaces_location)
+                print("")
+
+            if len(infected_surfaces_location[0]) > 0:
+                if agent_list_infected[i0] == 1:
+                    for i in range(len(infected_surfaces_location[0])):
+                        y = positions[0][i0].astype(np.int32) + infected_surfaces_location[0][i]
+                        x = positions[1][i0].astype(np.int32) + infected_surfaces_location[1][i]
+                        print("y= " + str(y))
+                        print("x= " + str(x))
+                        infected_surfaces_map[y][x] += 1
+                if agent_list_infected[i0] == 0:
+                    virus_amount = int(np.amax(infected_surface_perception, initial=0)/2)
+                    print(virus_amount)
+                    if random.random() <= (surface_infection_chance * virus_amount):
+                        agent_list_infected_hands[i0] = virus_amount
+                print(infected_surface_perception)
 
             # hidden path interaction
             path_location = np.zeros((2, 1))
