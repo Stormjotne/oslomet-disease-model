@@ -4,8 +4,6 @@ A script containing functions for calculating the fitness score of an individual
 from math import fabs
 from statistics import median, mean, pvariance
 
-from . import Data
-
 
 def population_spread_fitness(input_phenotype, desired_population, population_weight, spread_weight):
 	"""
@@ -24,9 +22,9 @@ def population_spread_fitness(input_phenotype, desired_population, population_we
 	relative_population = current_population / desired_population
 	#	infected = input_phenotype["number_currently_infected"]
 	relative_spread = infected / current_population
-	#	return population_weight * (1 - relative_population) + relative_spread * spread_weight
+	return population_weight * (1 - relative_population) + relative_spread * spread_weight
 	#	Minimization above
-	return 1 - (population_weight * (1 - relative_population) + relative_spread * spread_weight)
+	#  return 1 - (population_weight * (1 - relative_population) + relative_spread * spread_weight)
 
 
 def relative_spread_fitness(input_phenotype):
@@ -62,3 +60,27 @@ def placeholder_fitness(input_phenotype):
 	#  1 is maximum possible fitness. Subtract distances.
 	fitness = 1 - mean_distance - variance_distance
 	return fitness
+
+
+#   Use this conditional to test the script by running it "standalone".
+if __name__ == "__main__":
+	from OMDM.Individual import Individual
+	from OMDM.Evolution import Evolution
+	new_individual = Individual(0.2, genome_length=9)
+	new_individual.phenotype = Evolution.incubate(new_individual)
+	print(new_individual.phenotype)
+	generated_fitness = population_spread_fitness(new_individual.phenotype, 5000, 1, 1)
+	print(generated_fitness)
+	molded_individual = new_individual
+	molded_individual.phenotype["number_total_infected"] = 1
+	molded_individual.phenotype["number_of_agents"] = 5000
+	molded_fitness_one = population_spread_fitness(molded_individual.phenotype, 5000, 1, 1)
+	print(molded_fitness_one)
+	molded_individual.phenotype["number_total_infected"] = 5000
+	molded_individual.phenotype["number_of_agents"] = 5000
+	molded_fitness_two = population_spread_fitness(molded_individual.phenotype, 5000, 1, 1)
+	print(molded_fitness_two)
+	molded_individual.phenotype["number_total_infected"] = 1
+	molded_individual.phenotype["number_of_agents"] = 1
+	molded_fitness_three = population_spread_fitness(molded_individual.phenotype, 5000, 1, 1)
+	print(molded_fitness_three)

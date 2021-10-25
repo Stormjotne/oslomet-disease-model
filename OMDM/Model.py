@@ -1,7 +1,7 @@
 """
 
 """
-from random import random
+from random import random, choice
 
 
 class Model:
@@ -41,6 +41,8 @@ class Model:
         self.virus_ttl_surface = range(6, 9)
         #   virus time-to-live on agent in hours
         self.virus_ttl_agent = range(1, 9)
+        #   agent recovery rate
+        self.agent_recovery_rate = range(7, 14)
         #   Population (Number of Agents)
         #   Can be static for early testing
         #   Should be controlled by the Evolutionary Algorithm later
@@ -143,6 +145,7 @@ class Model:
         step = 0
         while step < self.simulation_time:
             self.number_currently_infected = 0
+            current_recovery_rate = choice(self.agent_recovery_rate)
             for agent in range(self.number_of_agents):
                 if 0 <= self.social_distancing < 1:
                     if random() < self.base_transmission_probability:
@@ -156,8 +159,10 @@ class Model:
                 elif 3 <= self.social_distancing < 4.1:
                     if random() < self.four_meter_transmission_probability:
                         self.number_currently_infected += 1
+                if step % current_recovery_rate == 0:
+                    self.number_currently_infected = round(self.number_currently_infected * 0.5)
             self.infected_history.append(self.number_currently_infected)
-            self.number_total_infected += self.number_currently_infected
+            self.number_total_infected += (self.number_currently_infected - self.infected_history[step - 1])
             step += 1
         return {"number_currently_infected": self.number_currently_infected,
                     "infected_history": self.infected_history,
