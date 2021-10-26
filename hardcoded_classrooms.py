@@ -56,7 +56,7 @@ def create_map(world_map):
 
     # desks
 
-    # teacher desk dimensions x = 30 y = 10
+    '''# teacher desk dimensions x = 30 y = 10
     world_map[75:85, 135:165] = 20
     # middle row
     # short desk dimensions x = 30 y = 10
@@ -85,7 +85,7 @@ def create_map(world_map):
     world_map[155:165, 190:230] = 20
     world_map[190:200, 190:230] = 20
     world_map[215:225, 190:230] = 20
-
+'''
     # door
     world_map[200:225, 250:254] = 0
 

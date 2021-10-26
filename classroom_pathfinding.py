@@ -18,7 +18,13 @@ world_map = np.zeros((world_size, world_size))
 world_map = create_map(world_map)
 
 # map that will contain the invisible paths that the agents will follow using vectors
+hidden_map_list = []
 hidden_map = np.zeros((world_size, world_size))
+
+hidden_map_list.append(hidden_map)
+hidden_map_list.append(np.copy(hidden_map))
+hidden_map_list.append(np.copy(hidden_map))
+hidden_map_list.append(np.copy(hidden_map))
 
 # map that will contain the infectious surfaces.
 infected_surfaces_map = np.full((world_size, world_size),-1)
@@ -37,15 +43,22 @@ D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
 nr_of_agents = 25  # current max 42
 
 agent_list_infected = np.random.rand(nr_of_agents) > 1
-agent_list_infected[0] = 1
-agent_list_susceptible = np.ones(nr_of_agents)
+agent_list_infected[3] = 1
+agent_list_susceptible = np.ones(nr_of_agents,dtype=bool)
 
 agent_list_infected_hands = np.zeros(nr_of_agents)
+
+# assign agents into different groups
+agent_list_groups = np.zeros(nr_of_agents,dtype=np.int32)
+group2 = 12
+agent_list_groups[np.random.choice(nr_of_agents,group2, False)] = 1
+
+
 
 #positions = np.random.rand(2, nr_of_agents)*world_size
 positions=np.zeros((2,nr_of_agents))
 
-print(positions)
+#print(positions)
 
 '''
 positions[0][0] = 100.0
@@ -75,23 +88,32 @@ amount_wearing_masks = int(wears_mask_percentage * nr_of_agents)
 agent_face_mask[np.random.choice(nr_of_agents,amount_wearing_masks,False)] = 1
 
 # the start and end node for the invisible path
-hidden_start = np.array([[100], [30]])
-
+hidden_start = np.array([[350,350,150,140], [300,300,100,450]])
 # hidden_end = np.array([[270], [150]])
-hidden_end = np.array([[120], [110]])
+#hidden_end = np.array([[120], [110]])
+hidden_end = np.array([[150,140,300,300], [100,450,450,100]])
+
 
 # creates the invisible path for vector path-following
+
+hidden_path_list = []
 hidden_path = []
 
 if not hidden_path:
-    hidden_path = find_path(grid, world_map, world_size, hidden_start[0][0], hidden_start[1][0], hidden_end[0][0], hidden_end[1][0])
+    for i in range(len(hidden_start[0])):
 
-for i in range(len(hidden_path)):
 
-    x1 = hidden_path[i][1]
-    y1 = hidden_path[i][0]
-    hidden_map[y1][x1] = 1+i
+        hidden_path = find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i])
+        hidden_path_list.append(hidden_path)
+        #hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
 
+
+for i in range(len(hidden_path_list)):
+    for j in range(len(hidden_path_list[i])):
+
+        x1 = hidden_path_list[i][j][1]
+        y1 = hidden_path_list[i][j][0]
+        hidden_map_list[i][y1][x1] = 1+j
 
 infected_positions = np.array(np.where(agent_list_infected == 1))
 infected_positions = np.array(positions[:, infected_positions])
@@ -179,15 +201,15 @@ while True:
 
         positions[0,spawning_counter]=350
         positions[1,spawning_counter]=300
-        velocity[0,spawning_counter]=-5
-        velocity[1,spawning_counter]=-6
+        #velocity[0,spawning_counter]=-5
+        #velocity[1,spawning_counter]=-6
         spawning_counter = spawning_counter + 1
-        print(spawning_counter)
+        #print(spawning_counter)
 
     #if statement true-> finish simulation
     iteration_counter=iteration_counter+1
     if iteration_counter==total_iterations:
-        print(iteration_counter)
+        #print(iteration_counter)
         break;
 
     #Matrices to calculate distances between agents by using positions at each iteration
@@ -211,64 +233,27 @@ while True:
     #print(infected_surfaces)
     # temporary for loop, need optimilization.
     # finding out if an infected agent has contact with a surface that he can infect.
-    '''for i in range(len(infected_surfaces[0])):
-        matches = [False]
-        if infected_surfaces_map[infected_surfaces[0][i]][infected_surfaces[1][i]] > 0:
-            y_component = np.equal(positions[0].astype(np.int32),infected_surfaces[0][i])
-            x_component = np.equal(positions[1].astype(np.int32),infected_surfaces[1][i])
-            matches = y_component & x_component
-
-        y_component_infected = np.equal(infected_positions[0].astype(np.int32), infected_surfaces[0][i])
-        x_component_infected = np.equal(infected_positions[1].astype(np.int32), infected_surfaces[1][i])
-        matches_infected = y_component_infected & x_component_infected
-
-        # if there is a match find out which agent/s it is
-        if True in matches_infected:
-            match_agent_location = np.array(np.where(matches_infected == True))
-            # at each agent location increase the surface infection count
-            for agent in match_agent_location:
-                infected_surfaces_map[infected_positions[0][agent][0][0].astype(np.int32)][infected_positions[1][agent][0][0].astype(np.int32)] += 1
-
-
-        if True in matches:
-            match_agent_location = np.array(np.where(matches == True))
-            # at each agent location increase the surface infection count
-            for agent in match_agent_location:
-                virus_amount = infected_surfaces_map[positions[0][agent][0].astype(np.int32)][positions[1][agent][0].astype(np.int32)]
-                if random.random() <= (surface_infection_chance * virus_amount):
-                    agent_list_infected_hands[agent] = virus_amount
-
-
-    #surface_infected_contact = np.array(np.where(infected_surfaces[]))
-    #if infected_positions
-    #infected_surface_cases =
-    # print(distances)
-    # print()
-
-    # print(infection_cases.shape)
-    if np.any(agent_list_infected_hands > 0):
-        infected_hands = np.array(np.where(agent_list_infected > 1))
-        for agent in infected_hands:
-            if random.random() <= self_infection_chance * agent_list_infected_hands[agent]:
-                agent_list_infected[agent] = 1
-                agent_list_susceptible[agent] = 0
-    '''
 
     if infection_cases.shape[1] >= 1:
         #print(infection_cases)
         #print("")
-        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-        #print(infections)
-        #print("")
+
+        #infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        infections = agent_list_infected[infection_cases[0, :]] & agent_list_susceptible[infection_cases[1, :]]
+
+        #print("")[0][age]
         infections_where = np.array(np.where(infections == 1))
+        print(infections_where)
+        #print(infections_where)
         #print(infections_where)
         #print("")
         #print("Length: " + str(len(infections_where[0])))
         #print(len(infections_where[0]))
 
-        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        #infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
 
-        infections_where = np.array(np.where(infections == 1))
+        #infections_where = np.array(np.where(infections == 1))
+
 
 
         if random.random() <= proximity_infection_chance:
@@ -306,20 +291,6 @@ while True:
     # random movement:
     if random_movement == 1:
         # wall and agent interaction
-        for i0 in range(nr_of_agents):
-
-            infected_surface_perception = infected_surfaces_map[
-                                          (positions[0, i0] - 1).astype(np.int32):(
-                                              positions[0, i0] + 2).astype(
-                                      np.int32),
-                                  (positions[1, i0] - 1).astype(np.int32):(
-                                              positions[1, i0] + 2).astype(
-                                      np.int32)]
-
-
-
-            #print(infected_surface_perception)
-            #print("")
 
 
         for i0 in range(nr_of_agents): #Try to replace nr_of_agents with spawning counter-1
@@ -337,6 +308,14 @@ while True:
                               (positions[1, i0] - dispersion_range).astype(np.int32):(
                                       positions[1, i0] + dispersion_range + 1).astype(
                                   np.int32)]
+
+            infected_surface_perception = infected_surfaces_map[
+                                          (positions[0, i0] - 1).astype(np.int32):(
+                                                  positions[0, i0] + 2).astype(
+                                              np.int32),
+                                          (positions[1, i0] - 1).astype(np.int32):(
+                                                  positions[1, i0] + 2).astype(
+                                              np.int32)]
 
 
             # Looking for values of walls and agents
@@ -365,11 +344,8 @@ while True:
                     if random.random() <= (surface_infection_chance * virus_amount):
                         agent_list_infected_hands[i0] = virus_amount
                 #print(infected_surface_perception)
-            print(agent_list_infected_hands)
             if np.any(agent_list_infected_hands > 0):
                 infected_hands = np.array(np.where(agent_list_infected_hands > 0))
-                print("yes")
-                print(infected_hands)
                 for agent in infected_hands[0]:
                     if random.random() <= self_infection_chance * agent_list_infected_hands[agent]:
                         agent_list_infected[agent] = 1
@@ -378,8 +354,9 @@ while True:
             # hidden path interaction
             path_location = np.zeros((2, 1))
 
+
             if agent_vector_pathfinding[i0] == 1:
-                hidden_path_perception = hidden_map[
+                hidden_path_perception = hidden_map_list[agent_list_groups[i0]][
                                   (positions[0, i0] - pathfinding_range).astype(np.int32):(
                                               positions[0, i0] + pathfinding_range+1).astype(
                                       np.int32),
@@ -394,6 +371,20 @@ while True:
                 if highest_value != 0:
                     path_location = np.array(np.where(hidden_path_perception == highest_value))
                     path_location -= pathfinding_range
+
+
+            if count == 500:
+                hidden_path_list[0].reverse()
+                hidden_path_list[1].reverse()
+
+                #np.where(agent_list_groups==0,agent_list_groups,2)
+                #np.where(agent_list_groups==1,agent_list_groups,3)
+
+                for i in range(len(hidden_path_list)):
+                    for j in range(len(hidden_path_list[i])):
+                        x1 = hidden_path_list[i][j][1]
+                        y1 = hidden_path_list[i][j][0]
+                        hidden_map_list[i][y1][x1] = 1 + j
 
             #Subtracting velocity from agent i0 equals to sum of agent_location array
 
@@ -421,6 +412,7 @@ while True:
 
         # change random movement to 0 after x turns
         count += 1
+        #print(count)
         if count == 200:
             random_movement = 1
 
@@ -467,9 +459,11 @@ while True:
 
     cv2.imshow('frame', world_resized)
 
-    #time.sleep(0.05)
-    print(time.time()-beginning_time)
+    time.sleep(0.05)
+    #print(time.time()-beginning_time)
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        print(time.time() - beginning_time)
+
         break
 
 cv2.destroyAllWindows()
