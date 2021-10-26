@@ -43,6 +43,7 @@ D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
 #
 nr_of_agents = 25  # current max 42
 
+agent_list_infected = np.random.rand(nr_of_agents) > 1
 
 agent_list_infected[0:2] = 1
 agent_list_infected[4:7] = 1
@@ -72,7 +73,7 @@ positions[1][4] = 31.0
 
 positions[0][7] = 102.0
 positions[1][7] = 29.0
-'''
+
 # toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
 agent_movement_mode = np.zeros(nr_of_agents)
 
