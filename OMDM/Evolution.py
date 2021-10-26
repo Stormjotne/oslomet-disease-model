@@ -99,9 +99,11 @@ class Evolution:
     def select_parents(self):
         """
         Select a number of best individuals to serve as the basis for the next generation.
+        Use reverse sorting if the fitness functioning is a maximisation problem, otherwise leave it out.
         :return: The best Individuals
         """
-        self.population.individuals.sort(key=lambda element: element.fitness, reverse=True)
+        self.population.individuals.sort(key=lambda element: element.fitness)
+        #   self.population.individuals.sort(key=lambda element: element.fitness, reverse=True)
         best_individuals = self.population.individuals[:self.number_of_parents]
         return best_individuals
         
