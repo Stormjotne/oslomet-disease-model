@@ -7,15 +7,16 @@ import matplotlib.pyplot as plt
 import cv2
 import time
 
-from .Maps import create_map
-from .Path import make_grid, find_path
+from OMDM.Maps import create_map
+from OMDM.Path import make_grid, find_path
+from OMDM.Campus import Campus
 
 
 class Model:
     """
     Implement the Agent-based Model in this class.
     """
-    def __init__(self, parameters, normalized=True, static_population=1000):
+    def __init__(self, parameters, normalized=True, static_population=1000, visualize=False):
         """
         Put any declarations of object fields/variables in this method.
         :param parameters:
@@ -25,6 +26,7 @@ class Model:
         :param static_population:
         :type static_population:
         """
+        self.visualize = visualize
         #   Model outputs
         self.number_currently_infected = 0
         self.infected_history = []
@@ -118,7 +120,7 @@ class Model:
         # creates the invisible path for vector path-following
         self.hidden_path = []
         if not self.hidden_path:
-            self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.fhidden_start[0][0],
+            self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][0],
                 self.hidden_start[1][0], self.hidden_end[0][0], self.hidden_end[1][0])
         for i in range(len(self.hidden_path)):
             x1 = self.hidden_path[i][1]
@@ -139,6 +141,11 @@ class Model:
         #   Unsure if this is current or total
         nr_of_infected = []
         self.path = []
+        #   Creating an array of values to use for spawning agents at every hundred iteration
+        ite_between = 20
+        self.spawn_array = np.full(self.number_of_agents, None)
+        for i in range(self.number_of_agents):
+            self.spawn_array[i] = i * ite_between
         
     def interpret_normalized_genome(self, parameters):
         """
@@ -207,14 +214,6 @@ class Model:
         self.cohort_size = parameters["cohort_size"]
         self.electives = parameters["electives"]
         '''
-        
-    def simulate(self):
-        """
-        
-        @return:
-        @rtype:
-        """
-        pass
     
     def placeholder_simulate(self):
         """
@@ -248,11 +247,290 @@ class Model:
                     "infected_history": self.infected_history,
                     "number_total_infected": self.number_total_infected,
                     "number_of_agents": self.number_of_agents}
-        
+
+    def calculate_path(self, destinations):
+        """
+        A function that calculates an individual path for each agent.
+        @return:
+        @rtype:
+        """
+        new_path = []
+        for i in range(self.number_of_agents):
+            new_path.append([])
+            new_path[i] = find_path(self.grid, self.world_map, self.world_size, self.positions[0][i],
+                self.positions[1][i], destinations[0][i], destinations[1][i])
+        return new_path
+
+    def disinfect_surfaces(self, surfaces):
+        """
+        A functions that removes infection from all surfaces.
+        @return:
+        @rtype:
+        """
+        for i in range(len(surfaces[0])):
+            y = surfaces[0][i]
+            x = surfaces[1][i]
+            self.infected_surfaces_map[y][x] = 0
     
+        return self.infected_surfaces_map
+        
+    def simulate(self):
+        """
+        
+        @return:
+        @rtype:
+        """
+        #   Creating an array of values to use for spawning agents at every hundred iteration
+        iteration_counter = 0
+        #   Counting variable for initiating agent spawning at defined position
+        spawning_counter = 0
+        infection_range = 3
+        velocity_range = 10
+        attraction_range = 20
+        dispersion_range = 5
+        max_speed = 2
+        random_movement = 1
+        count = 0
+        minute = 0
+        hour = 0
+        hand_infection_count = 0
+        nr_of_infected = []
+        while True:
+            #
+            if np.any(self.spawn_array[:] == iteration_counter):
+                self.positions[0, spawning_counter] = 350
+                self.positions[1, spawning_counter] = 300
+                self.velocity[0, spawning_counter] = -5
+                self.velocity[1, spawning_counter] = -6
+                spawning_counter = spawning_counter + 1
+                print(spawning_counter)
+
+            #   Moved plus operation to the bottom
+            #   iteration_counter = iteration_counter + 1
+            #   if statement true-> finish simulation
+            if iteration_counter == self.simulation_time:
+                print(iteration_counter)
+                break
+
+            # Matrices to calculate distances between agents by using positions at each iteration
+            p_1 = np.repeat(self.positions[:, :, np.newaxis], self.positions.shape[1], axis=2)
+            p_2 = np.rot90(p_1, axes=(1, 2))
+            p_1 -= p_2
+    
+            distances = np.linalg.norm(p_1, axis=0)
+            distances[np.arange(self.number_of_agents), np.arange(self.number_of_agents)] = infection_range + 20
+    
+            infection_cases = np.array(np.where(distances < infection_range))
+            velocity_cases = np.array(np.where(distances < velocity_range))
+            attraction_cases = np.array(np.where(distances < attraction_range))
+            dispersion_cases = np.array(np.where(distances < dispersion_range))
+    
+            # looks for infectious surfaces
+            infected_surfaces = np.array(np.where(self.infected_surfaces_map >= 0))
+
+            if infection_cases.shape[1] >= 1:
+                infections = self.agent_list_infected[infection_cases[0, :]] == \
+                    self.agent_list_susceptible[infection_cases[1, :]]
+                infections_where = np.array(np.where(infections == 1))
+                infections = self.agent_list_infected[infection_cases[0, :]] == \
+                    self.agent_list_susceptible[infection_cases[1, :]]
+                infections_where = np.array(np.where(infections == 1))
+    
+                if random() <= self.proximity_infection_chance:
+                    self.agent_list_infected[infection_cases[1, infections_where]] = 1
+                    self.agent_list_susceptible[infection_cases[1, infections_where]] = 0
+    
+                for i in range(len(infections_where[0])):
+        
+                    if self.agent_face_mask[infection_cases[1, infections_where[0][i]]] == 1:
+                        if random() <= self.proximity_infection_chance:
+                            self.agent_list_infected[infection_cases[1, infections_where[0][i]]] = 1
+                            self.agent_list_susceptible[infection_cases[1, infections_where[0][i]]] = 0
+
+                        # agent_list_infected[infection_cases[1, infections_where]] = 1
+                        # agent_list_susceptible[infection_cases[1, infections_where]] = 0
+        
+                    if self.agent_face_mask[infection_cases[1, infections_where[0][i]]] == 0:
+                        if random() <= self.proximity_infection_chance * (1.0 - self.mask_protection_rate):
+                            self.agent_list_infected[infection_cases[1, infections_where[0][i]]] = 1
+                            self.agent_list_susceptible[infection_cases[1, infections_where[0][i]]] = 0
+            
+            if dispersion_cases.shape[1] >= 1:
+                #   This would be where you implement social distancing as a force moving agent apart.
+                #   This is done in BOID simulations so look into that.
+                pass
+            if attraction_cases.shape[1] >= 1:
+                #   Make agents cluster - again BOIDS
+                pass
+            if velocity_cases.shape[1] >= 1:
+                #   Make agents align their movement - BOIDS
+                pass
+
+            #   Random Movement
+            if random_movement == 1:
+                #   Wall and agent interaction
+                #   Init infected_surface_perception outside loop scope
+                infected_surface_perception = None
+                infected_surfaces_location = None
+                for i0 in range(self.number_of_agents):
+                    infected_surface_perception = self.infected_surfaces_map[
+                                                  (self.positions[0, i0] - 1).astype(np.int32):(
+                                                    self.positions[0, i0] + 2).astype(
+                                                      np.int32),
+                                                  (self.positions[1, i0] - 1).astype(np.int32):(
+                                                    self.positions[1, i0] + 2).astype(
+                                                      np.int32)]
+                #   Try to replace nr_of_agents with spawning counter-1
+                for i0 in range(self.number_of_agents):
+                    wall_perception = self.world_map[
+                                      (self.positions[0, i0] - max_speed).astype(np.int32):(
+                                        self.positions[0, i0] + max_speed + 1).astype(
+                                          np.int32),
+                                      (self.positions[1, i0] - max_speed).astype(np.int32):(
+                                        self.positions[1, i0] + max_speed + 1).astype(
+                                          np.int32)]
+                    agent_percetion = self.collision_map[
+                                      (self.positions[0, i0] - dispersion_range).astype(np.int32):(
+                                        self.positions[0, i0] + dispersion_range + 1).astype(
+                                          np.int32),
+                                      (self.positions[1, i0] - dispersion_range).astype(np.int32):(
+                                        self.positions[1, i0] + dispersion_range + 1).astype(
+                                          np.int32)]
+                    #   Looking for values of walls and agents
+                    wall_location = np.array(np.where(wall_perception == 20))
+                    agent_location = np.array(np.where(agent_percetion == 10))
+
+                    infected_surfaces_location = np.array(np.where(infected_surface_perception >= 0))
+                    #   Subtract max speed to make the values relative to the center
+                    wall_location -= max_speed
+                    agent_location -= dispersion_range
+                    infected_surfaces_location -= 1
+
+                    if len(infected_surfaces_location[0]) > 0:
+                        if self.agent_list_infected[i0] == 1:
+                            for i in range(len(infected_surfaces_location[0])):
+                                y = self.positions[0][i0].astype(np.int32) + infected_surfaces_location[0][i]
+                                x = self.positions[1][i0].astype(np.int32) + infected_surfaces_location[1][i]
+                                self.infected_surfaces_map[y][x] += 1
+                        if self.agent_list_infected[i0] == 0:
+                            virus_amount = int(np.amax(infected_surface_perception, initial=0) / 2)
+                            if random() <= (self.surface_infection_chance * virus_amount):
+                                self.agent_list_infected_hands[i0] = virus_amount
+                    if np.any(self.agent_list_infected_hands > 0):
+                        infected_hands = np.array(np.where(self.agent_list_infected_hands > 0))
+                        for agent in infected_hands[0]:
+                            if random() <= self.self_infection_chance * self.agent_list_infected_hands[agent]:
+                                self.agent_list_infected[agent] = 1
+                                self.agent_list_susceptible[agent] = 0
+                    
+                    #   Hidden path interaction
+                    path_location = np.zeros((2, 1))
+    
+                    if self.agent_vector_pathfinding[i0] == 1:
+                        hidden_path_perception = self.hidden_map[
+                                          (self.positions[0, i0] - self.pathfinding_range).astype(np.int32):(
+                                                      self.positions[0, i0] + self.pathfinding_range + 1).astype(
+                                              np.int32),
+                                          (self.positions[1, i0] - self.pathfinding_range).astype(np.int32):(
+                                                      self.positions[1, i0] + self.pathfinding_range + 1).astype(
+                                              np.int32)]
+                        #   Print(hidden_path_perception)
+                        #   The initial value should fix a rare error where the array was empty
+                        highest_value = np.amax(hidden_path_perception, initial=1)
+                        if highest_value != 0:
+                            path_location = np.array(np.where(hidden_path_perception == highest_value))
+                            path_location -= self.pathfinding_range
+                    #   Needs attention
+                    #   Subtracting velocity from agent i0 equals to sum of agent_location array
+                    self.velocity[:, i0] -= np.sum(agent_location, 1) * 8
+                    #   Subtracting velocity from agent i0 equals to sum of wall_location array
+                    self.velocity[:, i0] -= np.sum(wall_location, 1) * 4
+                    self.velocity[:, i0] += np.sum(path_location, 1) * 30
+
+                self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5
+                self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)
+                self.velocity *= max_speed / self.velocity_length
+                #   Cancel the velocity change for agents who are not supposed to move randomly
+                cancel_velocity = np.array(np.where(self.agent_movement_mode == 1))
+                for vel in cancel_velocity:
+                    self.velocity[:, vel] = 0
+                stay = np.array(np.where(self.positions == 0))
+                for value in stay:
+                    self.velocity[:, value] = 0
+                #   Update all agent positions with velocity
+                self.positions += self.velocity
+                #   Change random movement to 0 after x turns
+                count += 1
+                if count == 200:
+                    random_movement = 1
+            # if the agent is supposed to follow an individual direct path
+            if random_movement == 0:
+                if not self.path:
+                    #   Update for new maps
+                    self.path = self.calculate_path(Campus.small_classroom_destinations)
+                for i in range(self.number_of_agents):
+                    if self.path[i]:
+                        x1 = self.path[i][0][1]
+                        y1 = self.path[i][0][0]
+                        self.positions[0][i] = y1
+                        self.positions[1][i] = x1
+                        self.path[i].pop(0)
+            # here dealing with agents moving outside the world
+            above_world_size = np.array(np.where(self.positions > self.world_size))
+            below_world_size = np.array(np.where(self.positions < 0))
+
+            self.positions[above_world_size[0, :], above_world_size[1, :]] = 0
+            self.positions[below_world_size[0, :], below_world_size[1, :]] = self.world_size - 1
+            self.world[:, :, :] = self.D3_world_map
+
+            self.world[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32), :] = 10
+            infected_positions = np.array(np.where(self.agent_list_infected == 1))
+            infected_positions = np.array(self.positions[:, infected_positions])
+            # print(infected_positions)
+            self.world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
+            
+            #   Replaced old infection summary
+            #   nr_of_infected.append(np.sum(self.agent_list_infected))
+            self.number_currently_infected = np.sum(self.agent_list_infected)
+            self.infected_history.append(self.number_currently_infected)
+            #   Needs attention
+            self.number_total_infected += (self.number_currently_infected - self.infected_history[iteration_counter - 1])
+
+            #   Erasing old positions
+            self.collision_map[:, :] = 0
+            # Updating new positions
+            self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 1
+            
+            #   Plus operation for while loop was moved from the top
+            iteration_counter = iteration_counter + 1
+            
+            #   OpenCV Visualization
+            if self.visualize:
+                dim = (600, 600)
+                world_resized = cv2.resize(self.world, dim, interpolation=cv2.INTER_AREA)
+                cv2.imshow('frame', world_resized)
+    
+                #   time.sleep(0.05)
+                #   print(time.time() - beginning_time)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+        if self.visualize:
+            cv2.destroyAllWindows()
+            
+        return {"number_currently_infected": self.number_currently_infected,
+                "infected_history": self.infected_history,
+                "number_total_infected": self.number_total_infected,
+                "number_of_agents": self.number_of_agents}
+
+
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
-    plt.title("Current positions")
-    plt.xlabel("x positions")
-    plt.ylabel("y positions")
-
+    from OMDM.Individual import Individual
+    from OMDM.Fitness import population_spread_fitness
+    new_individual = Individual(0.2, genome_length=9)
+    new_model = Model(new_individual.genome.genome, visualize=True)
+    new_individual.phenotype = new_model.simulate()
+    print(new_individual.phenotype)
+    new_individual.fitness = population_spread_fitness(new_individual.phenotype, 5000, 1, 1)
+    print(new_individual.fitness)
+    
