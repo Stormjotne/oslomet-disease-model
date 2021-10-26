@@ -43,8 +43,8 @@ D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
 nr_of_agents = 25  # current max 42
 
 agent_list_infected = np.random.rand(nr_of_agents) > 1
-agent_list_infected[0] = 1
-agent_list_susceptible = np.ones(nr_of_agents)
+agent_list_infected[3] = 1
+agent_list_susceptible = np.ones(nr_of_agents,dtype=bool)
 
 agent_list_infected_hands = np.zeros(nr_of_agents)
 
@@ -237,18 +237,23 @@ while True:
     if infection_cases.shape[1] >= 1:
         #print(infection_cases)
         #print("")
-        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-        #print(infections)
-        #print("")
+
+        #infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        infections = agent_list_infected[infection_cases[0, :]] & agent_list_susceptible[infection_cases[1, :]]
+
+        #print("")[0][age]
         infections_where = np.array(np.where(infections == 1))
+        print(infections_where)
+        #print(infections_where)
         #print(infections_where)
         #print("")
         #print("Length: " + str(len(infections_where[0])))
         #print(len(infections_where[0]))
 
-        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
+        #infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
 
-        infections_where = np.array(np.where(infections == 1))
+        #infections_where = np.array(np.where(infections == 1))
+
 
 
         if random.random() <= proximity_infection_chance:
@@ -380,7 +385,7 @@ while True:
                         x1 = hidden_path_list[i][j][1]
                         y1 = hidden_path_list[i][j][0]
                         hidden_map_list[i][y1][x1] = 1 + j
-                        
+
             #Subtracting velocity from agent i0 equals to sum of agent_location array
 
             velocity[:, i0] -= np.sum(agent_location, 1) * 8
@@ -407,7 +412,7 @@ while True:
 
         # change random movement to 0 after x turns
         count += 1
-        print(count)
+        #print(count)
         if count == 200:
             random_movement = 1
 
