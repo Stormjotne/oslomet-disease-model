@@ -65,14 +65,7 @@ positions=np.zeros((2,nr_of_agents))
 positions[0,:] = constants.start_point_y
 positions[1,:] = constants.start_point_x
 
-positions[0][0] = 100.0
-positions[1][0] = 30.0
 
-positions[0][4] = 101.0
-positions[1][4] = 31.0
-
-positions[0][7] = 102.0
-positions[1][7] = 29.0
 
 # toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
 agent_movement_mode = np.zeros(nr_of_agents)
@@ -390,10 +383,10 @@ while True:
 
         # If true-> set velocity and increment spawning_counter +1
         if np.any(spawn_array[:] == iteration_counter):
-            # positions[0,spawning_counter] = constants.start_point_y
-            # positions[1,spawning_counter] = constants.start_point_x
-            velocity[0, spawning_counter] = -5
-            velocity[1, spawning_counter] = -6
+            #positions[0,spawning_counter] = constants.start_point_y
+            #positions[1,spawning_counter] = constants.start_point_x
+            velocity[0, spawning_counter] = -1
+            velocity[1, spawning_counter] = 0
             spawning_counter = spawning_counter + 1
             print(spawning_counter)
 
