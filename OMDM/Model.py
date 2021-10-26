@@ -2,6 +2,13 @@
 
 """
 from random import random, choice
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+import time
+
+from .Maps import create_map
+from .Path import make_grid, find_path
 
 
 class Model:
@@ -23,6 +30,27 @@ class Model:
         self.infected_history = []
         self.number_total_infected = 0
         #   Parameters that are static to the model
+        #   Taken from constants
+        self.world_size = 550
+        self.pathfinding_range = 3
+        self.proximity_infection_chance = 0.7
+        self.surface_infection_chance = 0.05
+        self.self_infection_chance = 0.05
+        self.mask_protection_rate = 0.5
+        #   Taken from classroom_pathfinding
+        self.world = np.zeros((self.world_size, self.world_size, 3))
+        self.world_map = np.zeros((self.world_size, self.world_size))
+        self.world_map = create_map(self.world_map, self.world_size)
+        #   Map that will contain the invisible paths that the agents will follow using vectors
+        self.hidden_map = np.zeros((self.world_size, self.world_size))
+        #   Map that will contain the infectious surfaces.
+        self.infected_surfaces_map = np.full((self.world_size, self.world_size), -1)
+        #   Surface - door classroom1
+        self.infected_surfaces_map[200:225, 250:251] = 0
+        #   Creates the grid used by the pathfinding algorithm
+        self.grid = make_grid(self.world_size)
+        self.D3_world_map = np.repeat(self.world_map[:, :, np.newaxis], 3, axis=2)
+        #   Taken from parameters doc
         self.base_transmission_probability = 0.128
         self.one_meter_transmission_probability = 0.026
         #   Half-assed inferred values
@@ -63,10 +91,54 @@ class Model:
         self.vaccination = 0
         self.cohort_size = 0
         self.electives = 0
+        #   Interpret input genome
         if normalized:
             self.interpret_normalized_genome(parameters)
         else:
             self.interpret_genome(parameters)
+        #   Continue initialization
+        self.agent_list_infected = np.random.rand(self.number_of_agents) > 1
+        self.agent_list_infected[0] = 1
+        self.agent_list_susceptible = np.ones(self.number_of_agents)
+        self.agent_list_infected_hands = np.zeros(self.number_of_agents)
+        self.positions = np.zeros((2, self.number_of_agents))
+        #   Toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
+        self.agent_movement_mode = np.zeros(self.number_of_agents)
+        #   Toggle vector based pathfinding during random movement on or off.
+        self.agent_vector_pathfinding = np.ones(self.number_of_agents)
+        #   Toggle if an agent has a facemask on or off
+        self.agent_face_mask = np.zeros(self.number_of_agents)
+        #   Find the amount of agents that wear masks based on the % of the whole population
+        self.amount_wearing_masks = int(self.face_masks * self.number_of_agents)
+        #   Randomly choose the amount of agents
+        self.agent_face_mask[np.random.choice(self.number_of_agents, self.amount_wearing_masks, False)] = 1
+        #   The start and end node for the invisible path
+        self.hidden_start = np.array([[100], [30]])
+        self.hidden_end = np.array([[120], [110]])
+        # creates the invisible path for vector path-following
+        self.hidden_path = []
+        if not self.hidden_path:
+            self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.fhidden_start[0][0],
+                self.hidden_start[1][0], self.hidden_end[0][0], self.hidden_end[1][0])
+        for i in range(len(self.hidden_path)):
+            x1 = self.hidden_path[i][1]
+            y1 = self.hidden_path[i][0]
+            self.hidden_map[y1][x1] = 1 + i
+        self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
+        self.infected_positions = np.array(self.positions[:, self.infected_positions])
+
+        self.velocity = np.zeros((2, self.number_of_agents))
+        self.velocity_length = np.linalg.norm(self.velocity, ord=2, axis=0)
+        # Creating a map for collision avoidance
+        self.collision_map = np.zeros((self.world_size, self.world_size))
+        self.infection_range = 3
+        self.velocity_range = 10
+        self.attraction_range = 20
+        self.dispersion_range = 5
+        self.max_speed = 2
+        #   Unsure if this is current or total
+        nr_of_infected = []
+        self.path = []
         
     def interpret_normalized_genome(self, parameters):
         """
@@ -135,6 +207,14 @@ class Model:
         self.cohort_size = parameters["cohort_size"]
         self.electives = parameters["electives"]
         '''
+        
+    def simulate(self):
+        """
+        
+        @return:
+        @rtype:
+        """
+        pass
     
     def placeholder_simulate(self):
         """
@@ -172,4 +252,7 @@ class Model:
     
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
-    pass
+    plt.title("Current positions")
+    plt.xlabel("x positions")
+    plt.ylabel("y positions")
+

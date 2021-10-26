@@ -127,6 +127,11 @@ plt.ylabel("y positions")
 path = []
 
 
+"""
+PORTING TO Model.py HAS GOTTEN THIS FAR FROM THE TOP
+"""
+
+
 # a function that calculates an individual path for each agent.
 def calculate_path(nr_of_agents, grid, world_map, world_size, positions, destinations):
 
