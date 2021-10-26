@@ -28,26 +28,29 @@ infected_surfaces_map = np.full((world_size, world_size),-1)
 #Surface - door classroom1
 infected_surfaces_map[200:225, 250:251] = 0
 
-
 # creates the grid used by the pathfinding algorithm
 grid = make_grid(world_size)
 
-
+#Array for storing data about the frame and its RGB-values
 D3_world_map = np.repeat(world_map[:, :, np.newaxis], 3, axis=2)
 
-
+#
 nr_of_agents = 25  # current max 42
 
 agent_list_infected = np.random.rand(nr_of_agents) > 1
-agent_list_infected[0] = 1
-agent_list_susceptible = np.ones(nr_of_agents)
+agent_list_infected[0:2] = 1
+agent_list_infected[4:7] = 1
+print(agent_list_infected)
+agent_list_susceptible = np.zeros(nr_of_agents,dtype=bool)
 
 agent_list_infected_hands = np.zeros(nr_of_agents)
 
-#positions = np.random.rand(2, nr_of_agents)*world_size
+#Creating an array of 2*nr_of_agents for storing positions
 positions=np.zeros((2,nr_of_agents))
 
-#print(positions)
+#Start positions
+positions[0,:] = constants.start_point_y
+positions[1,:] = constants.start_point_x
 
 '''
 positions[0][0] = 100.0
@@ -62,10 +65,8 @@ positions[1][7] = 29.0
 # toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
 agent_movement_mode = np.zeros(nr_of_agents)
 
-
 # toggle vector based pathfinding during random movement on or off.
 agent_vector_pathfinding = np.ones(nr_of_agents)
-
 
 # toggle if an agent has a facemask on or off
 agent_face_mask = np.zeros(nr_of_agents)
@@ -101,15 +102,11 @@ infected_positions = np.array(positions[:, infected_positions])
 velocity = np.zeros((2,nr_of_agents))
 velocity_length = np.linalg.norm(velocity, ord=2, axis=0)
 
-#Adding agents to map for wall interaction
-#world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
-
-
 #Creating a map for collision avoidance
 collision_map= np.zeros((world_size,world_size))
 
 #Adding agents to this map
-#collision_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
+collision_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
 
 
 
@@ -177,25 +174,6 @@ spawning_counter=0
 
 while True:
 
-    # if statement true-> finish simulation
-    iteration_counter = iteration_counter + 1
-    if iteration_counter == total_iterations:
-        print(iteration_counter)
-        break;
-
-    #If true-> spawn at predifined location, set velocity and increment spawning_counter +1
-    if np.any(spawn_array[:] == iteration_counter):
-        positions[0,spawning_counter] = constants.start_point_y
-        positions[1,spawning_counter] = constants.start_point_x
-        velocity[0,spawning_counter] = -5
-        velocity[1,spawning_counter] = -6
-        spawning_counter = spawning_counter + 1
-        print(spawning_counter)
-    if  positions[0,spawning_counter] == constants.start_point_y and positions[1,spawning_counter] == constants.start_point_x:
-        agent_list_susceptible[spawning_counter] = 0
-    #elif spawning_counter>nr_of_agents:
-     #   agent_list_susceptible[:] =
-
 
     #Matrices to calculate distances between agents by using positions at each iteration
     p_1 = np.repeat(positions[:, :, np.newaxis], positions.shape[1], axis=2)
@@ -262,21 +240,9 @@ while True:
     '''
 
     if infection_cases.shape[1] >= 1:
-        #print(infection_cases)
-        #print("")
-        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-        #print(infections)
-        #print("")
-        infections_where = np.array(np.where(infections == 1))
-        #print(infections_where)
-        #print("")
-        #print("Length: " + str(len(infections_where[0])))
-        #print(len(infections_where[0]))
 
-        infections = agent_list_infected[infection_cases[0, :]] == agent_list_susceptible[infection_cases[1, :]]
-
-        infections_where = np.array(np.where(infections == 1))
-
+        infections = agent_list_infected[infection_cases[0, :]] & agent_list_susceptible[infection_cases[1, :]]
+        infections_where = np.array(np.where(infections == True))
 
         if random.random() <= proximity_infection_chance:
             agent_list_infected[infection_cases[1, infections_where]] = 1
@@ -314,7 +280,7 @@ while True:
     if random_movement == 1:
         # wall and agent interaction
 
-        for i0 in range(nr_of_agents): #Try to replace nr_of_agents with spawning counter-1
+        for i0 in range(nr_of_agents):
             wall_perception = world_map[
                               (positions[0, i0] - max_speed).astype(np.int32):(
                                       positions[0, i0] + max_speed + 1).astype(
@@ -366,8 +332,8 @@ while True:
             #print(agent_list_infected_hands)
             if np.any(agent_list_infected_hands > 0):
                 infected_hands = np.array(np.where(agent_list_infected_hands > 0))
-                print("yes")
-                print(infected_hands)
+                #print("yes")
+                #print(infected_hands)
                 for agent in infected_hands[0]:
                     if random.random() <= self_infection_chance * agent_list_infected_hands[agent]:
                         agent_list_infected[agent] = 1
@@ -411,10 +377,32 @@ while True:
         cancel_velocity = np.array(np.where(agent_movement_mode == 1))
         for vel in cancel_velocity:
             velocity[:, vel] = 0
-        #cancel velocity when spawning at position 0,0
-        stay = np.array(np.where(positions==0))
-        for value in stay:
-            velocity[:,value] = 0
+
+
+        #Cancel velocity when located at start position
+        check_y = np.array(np.where(positions[0] == constants.start_point_y))
+        check_x = np.array(np.where(positions[1] == constants.start_point_x))
+        stay=[]
+        for i in check_y[0]:
+            if i in check_x[0]:
+                #print(i)
+                stay+=[i]
+        velocity[:,stay] = 0
+        #Use the same array so that agents cannot be infected when located at start/finish
+        agent_list_susceptible[:] = True
+        agent_list_susceptible[stay] = False
+
+
+        # If true-> set velocity and increment spawning_counter +1
+        if np.any(spawn_array[:] == iteration_counter):
+            # positions[0,spawning_counter] = constants.start_point_y
+            # positions[1,spawning_counter] = constants.start_point_x
+            velocity[0, spawning_counter] = -5
+            velocity[1, spawning_counter] = -6
+            spawning_counter = spawning_counter + 1
+            print(spawning_counter)
+
+
         # update all agent positions with velocity
         positions += velocity
 
@@ -437,7 +425,6 @@ while True:
                 path[i].pop(0)
 
 
-
     # here dealing with agents moving outside the world
     above_world_size = np.array(np.where(positions > world_size))
     below_world_size = np.array(np.where(positions < 0))
@@ -446,29 +433,38 @@ while True:
     positions[below_world_size[0, :], below_world_size[1, :]] = world_size - 1
     world[:, :, :] = D3_world_map
 
+    #Updating positions of all agents represented as white dots
     world[positions[0].astype(np.int32), positions[1].astype(np.int32), :] = 10
+
+    #Updating positions of all infected agents represented as red dots
     infected_positions = np.array(np.where(agent_list_infected == 1))
     infected_positions = np.array(positions[:, infected_positions])
-    # print(infected_positions)
     world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
 
+    #Adds nr infected this iterations to a list of total infections
     nr_of_infected.append(np.sum(agent_list_infected))
 
-    # Erasing old positions
+    # Erasing old positions for collision avoidance between agants
     collision_map[:, :] = 0
-    # Updating new positions
+    # Updating new positions for collision avoidance between agants
     collision_map[positions[0].astype(np.int32), positions[1].astype(np.int32)] = 10
 
+    #Counting variable for nr of iterations
+    iteration_counter = iteration_counter + 1
 
-    dim = (600, 600)
+    dim = (1000, 700)
 
     world_resized = cv2.resize(world, dim, interpolation=cv2.INTER_AREA)
 
     cv2.imshow('frame', world_resized)
 
-    #time.sleep(0.005)
-    print(time.time()-beginning_time)
+    time.sleep(0.01)
+    #print(time.time()-beginning_time)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    # if statement true-> finish simulation
+    if iteration_counter == total_iterations:
+        print(iteration_counter)
+        break;
 
 cv2.destroyAllWindows()
