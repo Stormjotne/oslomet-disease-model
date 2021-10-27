@@ -26,6 +26,11 @@ class Model:
         :param static_population:
         :type static_population:
         """
+        self.max_speed = 2
+        self.dispersion_range = 5
+        self.attraction_range = 20
+        self.velocity_range = 10
+        self.infection_range = 3
         self.visualize = visualize
         #   Model outputs
         self.number_currently_infected = 0
@@ -39,7 +44,7 @@ class Model:
         self.surface_infection_chance = 0.05
         self.self_infection_chance = 0.05
         self.mask_protection_rate = 0.5
-        #   Taken from classroom_pathfinding
+        #   Taken from classroom_pathfinding and this module
         self.world = np.zeros((self.world_size, self.world_size, 3))
         self.world_map = np.zeros((self.world_size, self.world_size))
         self.world_map = create_map(self.world_map, self.world_size)
@@ -112,7 +117,7 @@ class Model:
         self.agent_face_mask = np.zeros(self.number_of_agents)
         #   Find the amount of agents that wear masks based on the % of the whole population
         self.amount_wearing_masks = int(self.face_masks * self.number_of_agents)
-        #   Randomly choose the amount of agents
+        #   Randomly choose the number of agents
         self.agent_face_mask[np.random.choice(self.number_of_agents, self.amount_wearing_masks, False)] = 1
         #   The start and end node for the invisible path
         self.hidden_start = np.array([[100], [30]])
@@ -133,11 +138,6 @@ class Model:
         self.velocity_length = np.linalg.norm(self.velocity, ord=2, axis=0)
         # Creating a map for collision avoidance
         self.collision_map = np.zeros((self.world_size, self.world_size))
-        self.infection_range = 3
-        self.velocity_range = 10
-        self.attraction_range = 20
-        self.dispersion_range = 5
-        self.max_speed = 2
         #   Unsure if this is current or total
         nr_of_infected = []
         self.path = []
@@ -168,18 +168,20 @@ class Model:
         #   Range:  1% - 100%   Decimal rounded to hundredths.
         self.hand_hygiene = 0.01 + round(parameters["hand_hygiene"] * 0.99, 2)
         #   Range:  1% - 100%   Decimal rounded to hundredths.
-        self.respiratory_hygiene = 0.01 + round(parameters["respiratory_hygiene"] * 0.99, 2)
-        #   Range:  1% - 100%   Decimal rounded to hundredths.
         self.face_masks = 0.01 + round(parameters["face_masks"] * 0.99, 2)
-        #   Range:  1% - 100%   Decimal rounded to hundredths.
-        self.face_shields = 0.01 + round(parameters["face_shields"] * 0.99, 2)
         #   Range:  1/8 - 8/8 hour/school day
         self.key_object_disinfection = (1 + round(parameters["key_object_disinfection"] * 7)) / 8
         #   Range:  1/16 - 8/16 hour/school day
         self.surface_disinfection = (1 + round(parameters["surface_disinfection"] * 7)) / 16
+        #   Range:  1% - 100%   Decimal rounded to hundredths.
+        self.face_touching_avoidance = 0.01 + round(parameters["face_touching_avoidance"] * 0.99, 2)
+        #   Range:  1% - 100%   Decimal rounded to hundredths.
+        #   self.face_shields = 0.01 + round(parameters["face_shields"] * 0.99, 2)
         #   Range:  1 - 3600 seconds
-        self.ventilation_of_indoor_spaces = 1 + round(parameters["ventilation_of_indoor_spaces"] * 3599)
+        #   self.ventilation_of_indoor_spaces = 1 + round(parameters["ventilation_of_indoor_spaces"] * 3599)
         #   These parameters are medium priority.
+        #   Range:  1% - 100%   Decimal rounded to hundredths.
+        #   self.respiratory_hygiene = 0.01 + round(parameters["respiratory_hygiene"] * 0.99, 2)
         '''
         self.face_touching_avoidance = parameters["face_touching_avoidance"]
         '''
@@ -192,17 +194,27 @@ class Model:
         '''
         
     def interpret_genome(self, parameters):
+        """
+        @deprecated
+        @param parameters:
+        @type parameters:
+        @return:
+        @rtype:
+        """
         if not self.number_of_agents:
             self.number_of_agents = parameters["number_of_agents"]
         #   Parameters controlled by the Evolutionary Algorithm
         self.social_distancing = parameters["social_distancing"]
         self.hand_hygiene = parameters["hand_hygiene"]
-        self.respiratory_hygiene = parameters["respiratory_hygiene"]
         self.face_masks = parameters["face_masks"]
-        self.face_shields = parameters["face_shields"]
         self.key_object_disinfection = parameters["key_object_disinfection"]
         self.surface_disinfection = parameters["surface_disinfection"]
+        self.face_touching_avoidance = parameters["face_touching_avoidance"]
+        '''
+        self.respiratory_hygiene = parameters["respiratory_hygiene"]
+        self.face_shields = parameters["face_shields"]
         self.ventilation_of_indoor_spaces = parameters["ventilation_of_indoor_spaces"]
+        '''
         #   These parameters are medium priority.
         '''
         self.face_touching_avoidance = parameters["face_touching_avoidance"]
@@ -284,11 +296,6 @@ class Model:
         iteration_counter = 0
         #   Counting variable for initiating agent spawning at defined position
         spawning_counter = 0
-        infection_range = 3
-        velocity_range = 10
-        attraction_range = 20
-        dispersion_range = 5
-        max_speed = 2
         random_movement = 1
         count = 0
         minute = 0
@@ -318,12 +325,12 @@ class Model:
             p_1 -= p_2
     
             distances = np.linalg.norm(p_1, axis=0)
-            distances[np.arange(self.number_of_agents), np.arange(self.number_of_agents)] = infection_range + 20
+            distances[np.arange(self.number_of_agents), np.arange(self.number_of_agents)] = self.infection_range + 20
     
-            infection_cases = np.array(np.where(distances < infection_range))
-            velocity_cases = np.array(np.where(distances < velocity_range))
-            attraction_cases = np.array(np.where(distances < attraction_range))
-            dispersion_cases = np.array(np.where(distances < dispersion_range))
+            infection_cases = np.array(np.where(distances < self.infection_range))
+            velocity_cases = np.array(np.where(distances < self.velocity_range))
+            attraction_cases = np.array(np.where(distances < self.attraction_range))
+            dispersion_cases = np.array(np.where(distances < self.dispersion_range))
     
             # looks for infectious surfaces
             infected_surfaces = np.array(np.where(self.infected_surfaces_map >= 0))
@@ -383,18 +390,18 @@ class Model:
                 #   Try to replace nr_of_agents with spawning counter-1
                 for i0 in range(self.number_of_agents):
                     wall_perception = self.world_map[
-                                      (self.positions[0, i0] - max_speed).astype(np.int32):(
-                                        self.positions[0, i0] + max_speed + 1).astype(
+                                      (self.positions[0, i0] - self.max_speed).astype(np.int32):(
+                                        self.positions[0, i0] + self.max_speed + 1).astype(
                                           np.int32),
-                                      (self.positions[1, i0] - max_speed).astype(np.int32):(
-                                        self.positions[1, i0] + max_speed + 1).astype(
+                                      (self.positions[1, i0] - self.max_speed).astype(np.int32):(
+                                        self.positions[1, i0] + self.max_speed + 1).astype(
                                           np.int32)]
                     agent_percetion = self.collision_map[
-                                      (self.positions[0, i0] - dispersion_range).astype(np.int32):(
-                                        self.positions[0, i0] + dispersion_range + 1).astype(
+                                      (self.positions[0, i0] - self.dispersion_range).astype(np.int32):(
+                                        self.positions[0, i0] + self.dispersion_range + 1).astype(
                                           np.int32),
-                                      (self.positions[1, i0] - dispersion_range).astype(np.int32):(
-                                        self.positions[1, i0] + dispersion_range + 1).astype(
+                                      (self.positions[1, i0] - self.dispersion_range).astype(np.int32):(
+                                        self.positions[1, i0] + self.dispersion_range + 1).astype(
                                           np.int32)]
                     #   Looking for values of walls and agents
                     wall_location = np.array(np.where(wall_perception == 20))
@@ -402,8 +409,8 @@ class Model:
 
                     infected_surfaces_location = np.array(np.where(infected_surface_perception >= 0))
                     #   Subtract max speed to make the values relative to the center
-                    wall_location -= max_speed
-                    agent_location -= dispersion_range
+                    wall_location -= self.max_speed
+                    agent_location -= self.dispersion_range
                     infected_surfaces_location -= 1
 
                     if len(infected_surfaces_location[0]) > 0:
@@ -449,7 +456,7 @@ class Model:
 
                 self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5
                 self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)
-                self.velocity *= max_speed / self.velocity_length
+                self.velocity *= self.max_speed / self.velocity_length
                 #   Cancel the velocity change for agents who are not supposed to move randomly
                 cancel_velocity = np.array(np.where(self.agent_movement_mode == 1))
                 for vel in cancel_velocity:
@@ -527,7 +534,7 @@ class Model:
 if __name__ == "__main__":
     from OMDM.Individual import Individual
     from OMDM.Fitness import population_spread_fitness
-    new_individual = Individual(0.2, genome_length=9)
+    new_individual = Individual(0.2, genome_length=7)
     new_model = Model(new_individual.genome.genome, visualize=True)
     new_individual.phenotype = new_model.simulate()
     print(new_individual.phenotype)
