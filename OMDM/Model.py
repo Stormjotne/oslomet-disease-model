@@ -3,7 +3,6 @@
 """
 from random import random, choice
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 import time
 
@@ -26,16 +25,40 @@ class Model:
         :param static_population:
         :type static_population:
         """
-        self.max_speed = 2
-        self.dispersion_range = 5
-        self.attraction_range = 20
-        self.velocity_range = 10
-        self.infection_range = 3
+        #   OpenCV Visualization for testing.
         self.visualize = visualize
+        
         #   Model outputs
         self.number_currently_infected = 0
         self.infected_history = []
         self.number_total_infected = 0
+        #   Model outputs end here.
+        
+        #   Parameters controlled by the Evolutionary Algorithm
+        #   Population (Number of Agents) (Can be static for testing)
+        self.number_of_agents = static_population
+        self.social_distancing = 0
+        self.hand_hygiene = 0
+        self.respiratory_hygiene = 0
+        self.face_masks = 0
+        self.face_shields = 0
+        self.key_object_disinfection = 0
+        self.surface_disinfection = 0
+        self.ventilation_of_indoor_spaces = 0
+        #   These parameters are medium priority.
+        self.face_touching_avoidance = 0
+        #   These parameters are low priority.
+        self.test_based_screening = 0
+        self.vaccination = 0
+        self.cohort_size = 0
+        self.electives = 0
+        #   Interpret input genome
+        if normalized:
+            self.interpret_normalized_genome(parameters)
+        else:
+            self.interpret_genome(parameters)
+        #   The genome interpretation ends here.
+        
         #   Parameters that are static to the model
         #   Taken from constants
         self.world_size = 550
@@ -44,7 +67,12 @@ class Model:
         self.surface_infection_chance = 0.05
         self.self_infection_chance = 0.05
         self.mask_protection_rate = 0.5
-        #   Taken from classroom_pathfinding and this module
+        #   Taken from classroom_pathfinding and what already existed in this module
+        self.max_speed = 2
+        self.dispersion_range = 5
+        self.attraction_range = 20
+        self.velocity_range = 10
+        self.infection_range = 3
         self.world = np.zeros((self.world_size, self.world_size, 3))
         self.world_map = np.zeros((self.world_size, self.world_size))
         self.world_map = create_map(self.world_map, self.world_size)
@@ -83,32 +111,7 @@ class Model:
         self.virus_ttl_agent = range(1, 9)
         #   agent recovery rate
         self.agent_recovery_rate = range(7, 14)
-        #   Population (Number of Agents)
-        #   Can be static for early testing
-        #   Should be controlled by the Evolutionary Algorithm later
-        self.number_of_agents = static_population
-        #   Parameters controlled by the Evolutionary Algorithm
-        self.social_distancing = 0
-        self.hand_hygiene = 0
-        self.respiratory_hygiene = 0
-        self.face_masks = 0
-        self.face_shields = 0
-        self.key_object_disinfection = 0
-        self.surface_disinfection = 0
-        self.ventilation_of_indoor_spaces = 0
-        #   These parameters are medium priority.
-        self.face_touching_avoidance = 0
-        #   These parameters are low priority.
-        self.test_based_screening = 0
-        self.vaccination = 0
-        self.cohort_size = 0
-        self.electives = 0
-        #   Interpret input genome
-        if normalized:
-            self.interpret_normalized_genome(parameters)
-        else:
-            self.interpret_genome(parameters)
-        #   Continue initialization
+        
         self.agent_list_infected = np.random.rand(self.number_of_agents) > 1
         self.agent_list_infected[5] = 1
         self.agent_list_susceptible = np.zeros(self.number_of_agents,dtype=bool)
@@ -250,6 +253,7 @@ class Model:
     
     def placeholder_simulate(self):
         """
+        @deprecated
         Just a mathematical model of the disease transmission with evolved parameters.
         :return:
         :rtype:
@@ -310,7 +314,7 @@ class Model:
         
     def simulate(self):
         """
-        
+        Run the model simulation with input parameters.
         @return:
         @rtype:
         """
