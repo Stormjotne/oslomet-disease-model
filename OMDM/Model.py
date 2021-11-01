@@ -461,9 +461,9 @@ class Model:
                             path_location -= self.pathfinding_range
 
                     if self.count == 300:
-                        self.hidden_path_list[0].reverse()
+                        '''self.hidden_path_list[0].reverse()
                         self.hidden_path_list[1].reverse()
-                        print("Hellllo")
+                        #print("Hellllo")
                         # np.where(agent_list_groups==0,agent_list_groups,2)
                         # np.where(agent_list_groups==1,agent_list_groups,3)
 
@@ -471,7 +471,7 @@ class Model:
                             for j in range(len(self.hidden_path_list[i])):
                                 x1 = self.hidden_path_list[i][j][1]
                                 y1 = self.hidden_path_list[i][j][0]
-                                self.hidden_map_list[i][y1][x1] = 1 + j
+                                self.hidden_map_list[i][y1][x1] = 1 + j'''
                     #   Needs attention
                     #   Subtracting velocity from agent i0 equals to sum of agent_location array
                     self.velocity[:, i0] -= np.sum(agent_location, 1) * 8
