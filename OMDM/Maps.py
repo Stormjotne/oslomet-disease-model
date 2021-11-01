@@ -1,6 +1,89 @@
 """
 
 """
+import numpy as np
+import cv2
+from OMDM.Campus import Campus
+img = cv2.imread('color_test.png', cv2.IMREAD_UNCHANGED)
+
+
+height = img.shape[0]
+width = img.shape[1]
+x_coordinates = []
+y_coordinates = []
+
+#print(height)
+#print(width)
+#print (img[0][0][0])
+#world_map = np.zeros((height, width), np.int32)
+infected_surfaces_map = np.full((height, width), -1)
+
+
+def create_map_from_img(world_map):
+
+#def create_map_from_img(world_map,infected_surfaces_map):
+    classroom_entrance_list = []
+    classroom_seats_list = []
+
+    for y in range(width):
+        for x in range(height):
+
+                # Check for walls
+                if img[y][x][0] == 0 and img[y][x][1] == 0 and img[y][x][2] == 0:
+                    world_map[y][x] = 20
+
+                # Check for spawning point
+                if img[y][x][0] == 0 and img[y][x][1] == 0 and img[y][x][2] == 255:
+                    Campus.start_point_y = y
+                    Campus.start_point_x = x
+
+                # Check for desks
+                if img[y][x][0] == 255 and img[y][x][1] == 0 and img[y][x][2] == 255:
+                    world_map[y][x] = 20
+                    infected_surfaces_map[y][x] = 0
+
+                # Check for doors
+                if img[y][x][0] == 255 and img[y][x][1] == 0 and img[y][x][2] == 255:
+                    infected_surfaces_map[y][x] = 0
+
+                # Check for classroom entrance/exit
+                if img[y][x][0] >= 200 and img[y][x][1] == 0 and img[y][x][2] == 0:
+                    for i in range(200,256,5):
+                        if img[y][x][0] == i:
+                            #classroom_entrance_list.append(((len(classroom_entrance_list)+1),(x,y)))
+                            classroom_entrance_list.append((i,(x,y)))
+
+                            print (classroom_entrance_list)
+
+                # check seats
+                if img[y][x][0] == 0 and img[y][x][1] >= 200 and img[y][x][2] == 0:
+                    for i in range(200,256,5):
+                        if img[y][x][0] == i:
+                            classroom_seats_list.append((i,(x,y)))
+
+                            print (classroom_entrance_list)
+
+
+
+    # sort classroom list of according to the lowest blue channel value
+    classroom_entrance_list.sort(key=lambda c:c[0])
+    print(classroom_entrance_list)
+    print(len(classroom_entrance_list))
+
+
+
+
+    # left border
+    world_map[0:height + 1, 0:2] = 20
+    # right border
+    world_map[0:height + 1, width - 1:width + 1] = 20
+    # top border
+    world_map[0:2, 0:width + 1] = 20
+    # bottom border
+    world_map[height - 1:height + 1, 0:width + 1] = 20
+
+    return world_map
+
 
 
 def create_map(world_map, world_size):
