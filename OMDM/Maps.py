@@ -53,7 +53,6 @@ def create_map_from_img(world_map,infected_surfaces_map):
                             #classroom_entrance_list.append(((len(classroom_entrance_list)+1),(x,y)))
                             classroom_entrance_list.append((i,(x,y)))
 
-                            print (classroom_entrance_list)
 
                 # check seats
                 if img[y][x][0] == 0 and img[y][x][1] >= 200 and img[y][x][2] == 0:
@@ -61,14 +60,12 @@ def create_map_from_img(world_map,infected_surfaces_map):
                         if img[y][x][1] == i:
                             classroom_seats_list.append((i,(x,y)))
 
-                            print (classroom_entrance_list)
 
 
 
     # sort classroom list of according to the lowest blue channel value
     classroom_entrance_list.sort(key=lambda c:c[0])
     print(classroom_entrance_list)
-    print(len(classroom_entrance_list))
 
 
 
