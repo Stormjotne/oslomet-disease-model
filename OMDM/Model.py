@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import time
 
-from OMDM.Maps import create_map
+from OMDM.Maps import create_map, create_map_from_img
 from OMDM.Path import make_grid, find_path
 from OMDM.Campus import Campus
 
@@ -61,7 +61,7 @@ class Model:
         
         #   Parameters that are static to the model
         #   Taken from constants
-        self.world_size = 550
+        self.world_size = 600
         self.pathfinding_range = 3
         self.proximity_infection_chance = 0.7
         self.surface_infection_chance = 0.05
@@ -75,7 +75,11 @@ class Model:
         self.infection_range = 3
         self.world = np.zeros((self.world_size, self.world_size, 3))
         self.world_map = np.zeros((self.world_size, self.world_size))
-        self.world_map = create_map(self.world_map, self.world_size)
+        #   Map that will contain the infectious surfaces.
+        self.infected_surfaces_map = np.full((self.world_size, self.world_size), -1)
+        #self.world_map = create_map(self.world_map, self.world_size)
+        self.world_map,self.infected_surfaces_map = create_map_from_img(self.world_map, self.infected_surfaces_map)
+
         #   Map that will contain the invisible paths that the agents will follow using vectors
         self.hidden_map = np.zeros((self.world_size, self.world_size))
         self.hidden_map_list = []
@@ -84,9 +88,8 @@ class Model:
         self.hidden_map_list.append(np.copy(self.hidden_map))
         self.hidden_map_list.append(np.copy(self.hidden_map))
         #   Map that will contain the infectious surfaces.
-        self.infected_surfaces_map = np.full((self.world_size, self.world_size), -1)
         #   Surface - door classroom1
-        self.infected_surfaces_map[200:225, 250:251] = 0
+        #self.infected_surfaces_map[200:225, 250:251] = 0
         #   Creates the grid used by the pathfinding algorithm
         self.grid = make_grid(self.world_size)
         self.D3_world_map = np.repeat(self.world_map[:, :, np.newaxis], 3, axis=2)
@@ -136,6 +139,9 @@ class Model:
         #   The start and end node for the invisible path
         self.hidden_start = np.array([[350,350,150,140], [300,300,100,450]])
         self.hidden_end = np.array([[150,140,300,300], [100,450,450,100]])
+
+        self.hidden_start = np.array([[10], [10]])
+        self.hidden_end = np.array([[20], [20]])
         # creates the invisible path for vector path-following
         self.hidden_path_list = []
         self.hidden_path = []
