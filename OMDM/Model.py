@@ -15,7 +15,7 @@ class Model:
     """
     Implement the Agent-based Model in this class.
     """
-    def __init__(self, parameters, normalized=True, static_population=24, visualize=False):
+    def __init__(self, parameters, normalized=True, static_population=25, visualize=False):
         """
         Put any declarations of object fields/variables in this method.
         :param parameters:
@@ -78,6 +78,11 @@ class Model:
         self.world_map = create_map(self.world_map, self.world_size)
         #   Map that will contain the invisible paths that the agents will follow using vectors
         self.hidden_map = np.zeros((self.world_size, self.world_size))
+        self.hidden_map_list = []
+        self.hidden_map_list.append(self.hidden_map)
+        self.hidden_map_list.append(np.copy(self.hidden_map))
+        self.hidden_map_list.append(np.copy(self.hidden_map))
+        self.hidden_map_list.append(np.copy(self.hidden_map))
         #   Map that will contain the infectious surfaces.
         self.infected_surfaces_map = np.full((self.world_size, self.world_size), -1)
         #   Surface - door classroom1
@@ -111,6 +116,10 @@ class Model:
         self.agent_list_infected[5] = 1
         self.agent_list_susceptible = np.zeros(self.number_of_agents,dtype=bool)
         self.agent_list_infected_hands = np.zeros(self.number_of_agents)
+        # assign agents into different groups
+        self.agent_list_groups = np.zeros(self.number_of_agents, dtype=np.int32)
+        group2 = 12
+        self.agent_list_groups[np.random.choice(self.number_of_agents, group2, False)] = 1
         self.positions = np.zeros((2, self.number_of_agents))
         self.positions[0,:] = Campus.start_point_y
         self.positions[1,:] = Campus.start_point_x
@@ -125,17 +134,23 @@ class Model:
         #   Randomly choose the number of agents
         self.agent_face_mask[np.random.choice(self.number_of_agents, self.amount_wearing_masks, False)] = 1
         #   The start and end node for the invisible path
-        self.hidden_start = np.array([[100], [30]])
-        self.hidden_end = np.array([[120], [110]])
+        self.hidden_start = np.array([[350,350,150,140], [300,300,100,450]])
+        self.hidden_end = np.array([[150,140,300,300], [100,450,450,100]])
         # creates the invisible path for vector path-following
+        self.hidden_path_list = []
         self.hidden_path = []
         if not self.hidden_path:
-            self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][0],
-                self.hidden_start[1][0], self.hidden_end[0][0], self.hidden_end[1][0])
-        for i in range(len(self.hidden_path)):
-            x1 = self.hidden_path[i][1]
-            y1 = self.hidden_path[i][0]
-            self.hidden_map[y1][x1] = 1 + i
+            for i in range(len(self.hidden_start[0])):
+                self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
+                                        self.hidden_end[0][i], self.hidden_end[1][i])
+                self.hidden_path_list.append(self.hidden_path)
+                # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
+
+        for i in range(len(self.hidden_path_list)):
+            for j in range(len(self.hidden_path_list[i])):
+                x1 = self.hidden_path_list[i][j][1]
+                y1 = self.hidden_path_list[i][j][0]
+                self.hidden_map_list[i][y1][x1] = 1 + j
         self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
         self.infected_positions = np.array(self.positions[:, self.infected_positions])
 
@@ -143,6 +158,8 @@ class Model:
         self.velocity_length = np.linalg.norm(self.velocity, ord=2, axis=0)
         # Creating a map for collision avoidance
         self.collision_map = np.zeros((self.world_size, self.world_size))
+        # Adding agents to this map
+        self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 10
         #   Unsure if this is current or total
         nr_of_infected = []
         self.path = []
@@ -153,7 +170,7 @@ class Model:
         self.spawn_array = np.full(self.number_of_agents, None)
         for i in range(self.number_of_agents):
             self.spawn_array[i] = i * ite_between
-        
+
     def interpret_normalized_genome(self, parameters):
         """
         Interpret values between 0 and 1 to parameters usable in the model.
@@ -281,6 +298,7 @@ class Model:
                 self.positions[1][i], destinations[0][i], destinations[1][i])
         return new_path
 
+
     def disinfect_surfaces(self, surfaces):
         """
         A functions that removes infection from all surfaces.
@@ -368,14 +386,6 @@ class Model:
                 #   Init infected_surface_perception outside loop scope
                 infected_surface_perception = None
                 infected_surfaces_location = None
-                for i0 in range(self.number_of_agents):
-                    infected_surface_perception = self.infected_surfaces_map[
-                                                  (self.positions[0, i0] - 1).astype(np.int32):(
-                                                    self.positions[0, i0] + 2).astype(
-                                                      np.int32),
-                                                  (self.positions[1, i0] - 1).astype(np.int32):(
-                                                    self.positions[1, i0] + 2).astype(
-                                                      np.int32)]
                 #   Try to replace nr_of_agents with spawning counter-1
                 for i0 in range(self.number_of_agents):
                     wall_perception = self.world_map[
@@ -392,6 +402,13 @@ class Model:
                                       (self.positions[1, i0] - self.dispersion_range).astype(np.int32):(
                                         self.positions[1, i0] + self.dispersion_range + 1).astype(
                                           np.int32)]
+                    infected_surface_perception = self.infected_surfaces_map[
+                                                  (self.positions[0, i0] - 1).astype(np.int32):(
+                                                          self.positions[0, i0] + 2).astype(
+                                                      np.int32),
+                                                  (self.positions[1, i0] - 1).astype(np.int32):(
+                                                          self.positions[1, i0] + 2).astype(
+                                                      np.int32)]
                     #   Looking for values of walls and agents
                     wall_location = np.array(np.where(wall_perception == 20))
                     agent_location = np.array(np.where(agent_percetion == 10))
@@ -423,7 +440,7 @@ class Model:
                     path_location = np.zeros((2, 1))
     
                     if self.agent_vector_pathfinding[i0] == 1:
-                        hidden_path_perception = self.hidden_map[
+                        hidden_path_perception = self.hidden_map_list[self.agent_list_groups[i0]][
                                           (self.positions[0, i0] - self.pathfinding_range).astype(np.int32):(
                                                       self.positions[0, i0] + self.pathfinding_range + 1).astype(
                                               np.int32),
@@ -436,6 +453,19 @@ class Model:
                         if highest_value != 0:
                             path_location = np.array(np.where(hidden_path_perception == highest_value))
                             path_location -= self.pathfinding_range
+
+                    if self.count == 300:
+                        self.hidden_path_list[0].reverse()
+                        self.hidden_path_list[1].reverse()
+                        print("Hellllo")
+                        # np.where(agent_list_groups==0,agent_list_groups,2)
+                        # np.where(agent_list_groups==1,agent_list_groups,3)
+
+                        for i in range(len(self.hidden_path_list)):
+                            for j in range(len(self.hidden_path_list[i])):
+                                x1 = self.hidden_path_list[i][j][1]
+                                y1 = self.hidden_path_list[i][j][0]
+                                self.hidden_map_list[i][y1][x1] = 1 + j
                     #   Needs attention
                     #   Subtracting velocity from agent i0 equals to sum of agent_location array
                     self.velocity[:, i0] -= np.sum(agent_location, 1) * 8
@@ -467,8 +497,8 @@ class Model:
 
                 #
                 if np.any(self.spawn_array[:] == self.iteration_counter):
-                    self.velocity[0, spawning_counter] = -5
-                    self.velocity[1, spawning_counter] = -6
+                    self.velocity[0, spawning_counter] = 0
+                    self.velocity[1, spawning_counter] = -1
                     spawning_counter = spawning_counter + 1
                     print(spawning_counter)
 
@@ -476,6 +506,7 @@ class Model:
                 self.positions += self.velocity
 
                 #   Change random movement to 0 after x turns
+                print(self.count)
                 self.count += 1
                 if self.count == 200:
                     self.random_movement = 1
@@ -507,7 +538,7 @@ class Model:
             infected_positions = np.array(self.positions[:, infected_positions])
             # print(infected_positions)
             self.world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
-            
+
             #   Replaced old infection summary
             #   nr_of_infected.append(np.sum(self.agent_list_infected))
             self.number_currently_infected = np.sum(self.agent_list_infected)
@@ -524,7 +555,7 @@ class Model:
             self.iteration_counter = self.iteration_counter + 1
             # if statement true-> finish simulation
             if self.iteration_counter == self.simulation_time:
-                print(iteration_counter)
+                print(self.iteration_counter)
                 break;
             #   OpenCV Visualization
             if self.visualize:
