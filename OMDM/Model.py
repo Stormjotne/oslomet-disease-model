@@ -141,6 +141,8 @@ class Model:
         #   Unsure if this is current or total
         nr_of_infected = []
         self.path = []
+        self.random_movement = 1
+        self.count = 0
         #   Creating an array of values to use for spawning agents at every hundred iteration
         ite_between = 20
         self.spawn_array = np.full(self.number_of_agents, None)
@@ -293,31 +295,15 @@ class Model:
         @rtype:
         """
         #   Creating an array of values to use for spawning agents at every hundred iteration
-        iteration_counter = 0
-        #   Counting variable for initiating agent spawning at defined position
+        self.iteration_counter = 0
+
+        # Counting variable for initiating agent spawning at defined position
         spawning_counter = 0
-        random_movement = 1
-        count = 0
         minute = 0
         hour = 0
         hand_infection_count = 0
         nr_of_infected = []
         while True:
-            #
-            if np.any(self.spawn_array[:] == iteration_counter):
-                self.positions[0, spawning_counter] = 350
-                self.positions[1, spawning_counter] = 300
-                self.velocity[0, spawning_counter] = -5
-                self.velocity[1, spawning_counter] = -6
-                spawning_counter = spawning_counter + 1
-                print(spawning_counter)
-
-            #   Moved plus operation to the bottom
-            #   iteration_counter = iteration_counter + 1
-            #   if statement true-> finish simulation
-            if iteration_counter == self.simulation_time:
-                print(iteration_counter)
-                break
 
             # Matrices to calculate distances between agents by using positions at each iteration
             p_1 = np.repeat(self.positions[:, :, np.newaxis], self.positions.shape[1], axis=2)
@@ -374,7 +360,7 @@ class Model:
                 pass
 
             #   Random Movement
-            if random_movement == 1:
+            if self.random_movement == 1:
                 #   Wall and agent interaction
                 #   Init infected_surface_perception outside loop scope
                 infected_surface_perception = None
@@ -457,21 +443,44 @@ class Model:
                 self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5
                 self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)
                 self.velocity *= self.max_speed / self.velocity_length
+
                 #   Cancel the velocity change for agents who are not supposed to move randomly
                 cancel_velocity = np.array(np.where(self.agent_movement_mode == 1))
                 for vel in cancel_velocity:
                     self.velocity[:, vel] = 0
-                stay = np.array(np.where(self.positions == 0))
-                for value in stay:
-                    self.velocity[:, value] = 0
-                #   Update all agent positions with velocity
+
+                # Cancel velocity when located at start position
+                check_y = np.array(np.where(self.positions[0] == 350))
+                check_x = np.array(np.where(self.positions[1] == 300))
+                stay = []
+                for i in check_y[0]:
+                    if i in check_x[0]:
+                        # print(i)
+                        stay += [i]
+                self.velocity[:, stay] = 0
+                # Use the same array so that agents cannot be infected when located at start/finish
+                self.agent_list_susceptible[:] = True
+                self.agent_list_susceptible[stay] = False
+
+                #
+                if np.any(self.spawn_array[:] == self.iteration_counter):
+                    self.velocity[0, spawning_counter] = -5
+                    self.velocity[1, spawning_counter] = -6
+                    spawning_counter = spawning_counter + 1
+                    print(spawning_counter)
+
+                # update all agent positions with velocity
                 self.positions += self.velocity
+
                 #   Change random movement to 0 after x turns
-                count += 1
-                if count == 200:
-                    random_movement = 1
+                self.count += 1
+                if self.count == 200:
+                    self.random_movement = 1
+
+
+
             # if the agent is supposed to follow an individual direct path
-            if random_movement == 0:
+            if self.random_movement == 0:
                 if not self.path:
                     #   Update for new maps
                     self.path = self.calculate_path(Campus.small_classroom_destinations)
@@ -501,7 +510,7 @@ class Model:
             self.number_currently_infected = np.sum(self.agent_list_infected)
             self.infected_history.append(self.number_currently_infected)
             #   Needs attention
-            self.number_total_infected += (self.number_currently_infected - self.infected_history[iteration_counter - 1])
+            self.number_total_infected += (self.number_currently_infected - self.infected_history[self.iteration_counter - 1])
 
             #   Erasing old positions
             self.collision_map[:, :] = 0
@@ -509,8 +518,11 @@ class Model:
             self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 1
             
             #   Plus operation for while loop was moved from the top
-            iteration_counter = iteration_counter + 1
-            
+            self.iteration_counter = self.iteration_counter + 1
+            # if statement true-> finish simulation
+            if self.iteration_counter == self.simulation_time:
+                print(iteration_counter)
+                break;
             #   OpenCV Visualization
             if self.visualize:
                 dim = (600, 600)
@@ -523,12 +535,12 @@ class Model:
                     break
         if self.visualize:
             cv2.destroyAllWindows()
-            
+
+
         return {"number_currently_infected": self.number_currently_infected,
                 "infected_history": self.infected_history,
                 "number_total_infected": self.number_total_infected,
                 "number_of_agents": self.number_of_agents}
-
 
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
