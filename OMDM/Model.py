@@ -16,7 +16,7 @@ class Model:
     """
     Implement the Agent-based Model in this class.
     """
-    def __init__(self, parameters, normalized=True, static_population=1000, visualize=False):
+    def __init__(self, parameters, normalized=True, static_population=24, visualize=False):
         """
         Put any declarations of object fields/variables in this method.
         :param parameters:
@@ -105,10 +105,12 @@ class Model:
             self.interpret_genome(parameters)
         #   Continue initialization
         self.agent_list_infected = np.random.rand(self.number_of_agents) > 1
-        self.agent_list_infected[0] = 1
-        self.agent_list_susceptible = np.ones(self.number_of_agents)
+        self.agent_list_infected[5] = 1
+        self.agent_list_susceptible = np.zeros(self.number_of_agents,dtype=bool)
         self.agent_list_infected_hands = np.zeros(self.number_of_agents)
         self.positions = np.zeros((2, self.number_of_agents))
+        self.positions[0,:] = 350
+        self.positions[1,:] = 300
         #   Toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
         self.agent_movement_mode = np.zeros(self.number_of_agents)
         #   Toggle vector based pathfinding during random movement on or off.
@@ -322,12 +324,9 @@ class Model:
             infected_surfaces = np.array(np.where(self.infected_surfaces_map >= 0))
 
             if infection_cases.shape[1] >= 1:
-                infections = self.agent_list_infected[infection_cases[0, :]] == \
+                infections = self.agent_list_infected[infection_cases[0, :]] & \
                     self.agent_list_susceptible[infection_cases[1, :]]
-                infections_where = np.array(np.where(infections == 1))
-                infections = self.agent_list_infected[infection_cases[0, :]] == \
-                    self.agent_list_susceptible[infection_cases[1, :]]
-                infections_where = np.array(np.where(infections == 1))
+                infections_where = np.array(np.where(infections == True))
     
                 if random() <= self.proximity_infection_chance:
                     self.agent_list_infected[infection_cases[1, infections_where]] = 1
