@@ -16,12 +16,12 @@ y_coordinates = []
 #print(width)
 #print (img[0][0][0])
 #world_map = np.zeros((height, width), np.int32)
-infected_surfaces_map = np.full((height, width), -1)
+#infected_surfaces_map = np.full((height, width), -1)
 
 
-def create_map_from_img(world_map):
+#def create_map_from_img(world_map):
 
-#def create_map_from_img(world_map,infected_surfaces_map):
+def create_map_from_img(world_map,infected_surfaces_map):
     classroom_entrance_list = []
     classroom_seats_list = []
 
@@ -58,7 +58,7 @@ def create_map_from_img(world_map):
                 # check seats
                 if img[y][x][0] == 0 and img[y][x][1] >= 200 and img[y][x][2] == 0:
                     for i in range(200,256,5):
-                        if img[y][x][0] == i:
+                        if img[y][x][1] == i:
                             classroom_seats_list.append((i,(x,y)))
 
                             print (classroom_entrance_list)
@@ -82,7 +82,7 @@ def create_map_from_img(world_map):
     # bottom border
     world_map[height - 1:height + 1, 0:width + 1] = 20
 
-    return world_map
+    return world_map,infected_surfaces_map
 
 
 
