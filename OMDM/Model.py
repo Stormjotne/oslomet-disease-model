@@ -109,8 +109,8 @@ class Model:
         self.agent_list_susceptible = np.zeros(self.number_of_agents,dtype=bool)
         self.agent_list_infected_hands = np.zeros(self.number_of_agents)
         self.positions = np.zeros((2, self.number_of_agents))
-        self.positions[0,:] = 350
-        self.positions[1,:] = 300
+        self.positions[0,:] = Campus.start_point_y
+        self.positions[1,:] = Campus.start_point_x
         #   Toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
         self.agent_movement_mode = np.zeros(self.number_of_agents)
         #   Toggle vector based pathfinding during random movement on or off.
@@ -449,8 +449,8 @@ class Model:
                     self.velocity[:, vel] = 0
 
                 # Cancel velocity when located at start position
-                check_y = np.array(np.where(self.positions[0] == 350))
-                check_x = np.array(np.where(self.positions[1] == 300))
+                check_y = np.array(np.where(self.positions[0] == Campus.start_point_y))
+                check_x = np.array(np.where(self.positions[1] == Campus.start_point_x))
                 stay = []
                 for i in check_y[0]:
                     if i in check_x[0]:
