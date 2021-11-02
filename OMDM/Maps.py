@@ -34,8 +34,9 @@ def create_map_from_img(world_map,infected_surfaces_map):
 
                 # Check for spawning point
                 if img[y][x][0] == 0 and img[y][x][1] == 0 and img[y][x][2] == 255:
-                    Campus.start_point_y = y
-                    Campus.start_point_x = x
+                    start_location_x = x
+                    start_location_y = y
+
 
                 # Check for desks
                 if img[y][x][0] == 255 and img[y][x][1] == 0 and img[y][x][2] == 255:
@@ -80,7 +81,7 @@ def create_map_from_img(world_map,infected_surfaces_map):
     # bottom border
     world_map[height - 1:height + 1, 0:width + 1] = 20
 
-    return world_map,infected_surfaces_map,classroom_entrance_list
+    return world_map,infected_surfaces_map,classroom_entrance_list,start_location_x,start_location_y
 
 
 
