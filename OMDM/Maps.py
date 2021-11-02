@@ -58,7 +58,8 @@ def create_map_from_img(world_map,infected_surfaces_map):
                 if img[y][x][0] == 0 and img[y][x][1] >= 200 and img[y][x][2] == 0:
                     for i in range(200,256,5):
                         if img[y][x][1] == i:
-                            classroom_seats_list.append((i,(x,y)))
+                            if i not in classroom_seats_list:
+                                classroom_seats_list.append((i,(x,y)))
 
 
 
@@ -79,7 +80,7 @@ def create_map_from_img(world_map,infected_surfaces_map):
     # bottom border
     world_map[height - 1:height + 1, 0:width + 1] = 20
 
-    return world_map,infected_surfaces_map
+    return world_map,infected_surfaces_map,classroom_entrance_list
 
 
 
