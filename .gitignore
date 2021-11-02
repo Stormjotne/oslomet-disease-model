@@ -313,3 +313,7 @@ cov.xml
 coverage.xml
 junit.xml
 /fake_project
+/OMDM/path_list
+/path_list
+/imported_map_information
+/OMDM/imported_map_information
