@@ -1,10 +1,12 @@
 """
 
 """
+import pickle
 from random import random, choice
 import numpy as np
 import cv2
 import time
+import os.path
 
 from OMDM.Maps import create_map, create_map_from_img
 from OMDM.Path import make_grid, find_path
@@ -171,13 +173,17 @@ class Model:
         # creates the invisible path for vector path-following
         self.hidden_path_list = []
         self.hidden_path = []
-        if not self.hidden_path:
+        if not os.path.isfile("path_list"):
+
+        #if not self.hidden_path:
             for i in range(len(self.hidden_start[0])):
                 self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
                                         self.hidden_end[0][i], self.hidden_end[1][i])
                 print(self.hidden_path)
                 self.hidden_path_list.append(self.hidden_path)
                 # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
+                print("List: ")
+                print(self.hidden_path_list)
 
             for i in range(len(self.hidden_path_list)):
                 for j in range(len(self.hidden_path_list[i])):
@@ -185,6 +191,11 @@ class Model:
                     y1 = self.hidden_path_list[i][j][0]
                     self.hidden_map_list[i][y1][x1] = 1 + j
 
+            with open("path_list", 'wb') as f:
+                pickle.dump(self.hidden_map_list,f)
+        else:
+            with open("path_list", 'rb') as f:
+                self.hidden_map_list = pickle.load(f)
 
         self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
         self.infected_positions = np.array(self.positions[:, self.infected_positions])
