@@ -15,7 +15,7 @@ class Model:
     """
     Implement the Agent-based Model in this class.
     """
-    def __init__(self, parameters, normalized=True, static_population=25, visualize=False):
+    def __init__(self, parameters, normalized=True, static_population=36, visualize=False):
         """
         Put any declarations of object fields/variables in this method.
         :param parameters:
@@ -88,6 +88,16 @@ class Model:
         for i in range(len(self.classroom_locations)):
             self.hidden_map_list.append(np.copy(self.hidden_map))
 
+        '''self.hidden_map = np.zeros((self.world_size, self.world_size))
+        self.hidden_map_list = []
+        
+        for i in range(len(self.agent_list_groups)):
+            self.hidden_map_list.append([]) 
+            for j in range(len(self.group_schedule[i]+1)):
+                self.hidden_map_list[i].append(np.copy(self.hidden_map))
+        '''
+
+
         #   Map that will contain the infectious surfaces.
         #   Surface - door classroom1
         #self.infected_surfaces_map[200:225, 250:251] = 0
@@ -122,8 +132,16 @@ class Model:
         self.agent_list_infected_hands = np.zeros(self.number_of_agents)
         # assign agents into different groups
         self.agent_list_groups = np.zeros(self.number_of_agents, dtype=np.int32)
-        group2 = 12
-        self.agent_list_groups[np.random.choice(self.number_of_agents, group2, False)] = 1
+        # contains the amount of students in groups 1,2,3. The ramainder will end up in the default group 0.
+        self.members_per_group = [12,10]
+        for i in range(len(self.members_per_group)):
+            self.agent_list_groups[np.random.choice(self.number_of_agents, self.members_per_group[i], False)] = i+1
+
+        self.group_schedule = [[2,1,3],[3,2,1],[1,3,2]]
+        #self.group_path_list =
+        #for i in range(len(self.group_schedule)):
+
+
         self.positions = np.zeros((2, self.number_of_agents))
         self.positions[0,:] = Campus.start_point_y
         self.positions[1,:] = Campus.start_point_x
