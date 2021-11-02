@@ -78,15 +78,16 @@ class Model:
         #   Map that will contain the infectious surfaces.
         self.infected_surfaces_map = np.full((self.world_size, self.world_size), -1)
         #self.world_map = create_map(self.world_map, self.world_size)
-        self.world_map,self.infected_surfaces_map = create_map_from_img(self.world_map, self.infected_surfaces_map)
+
+        self.world_map,self.infected_surfaces_map,self.classroom_locations = create_map_from_img(self.world_map, self.infected_surfaces_map)
 
         #   Map that will contain the invisible paths that the agents will follow using vectors
         self.hidden_map = np.zeros((self.world_size, self.world_size))
         self.hidden_map_list = []
-        self.hidden_map_list.append(self.hidden_map)
-        self.hidden_map_list.append(np.copy(self.hidden_map))
-        self.hidden_map_list.append(np.copy(self.hidden_map))
-        self.hidden_map_list.append(np.copy(self.hidden_map))
+
+        for i in range(len(self.classroom_locations)):
+            self.hidden_map_list.append(np.copy(self.hidden_map))
+
         #   Map that will contain the infectious surfaces.
         #   Surface - door classroom1
         #self.infected_surfaces_map[200:225, 250:251] = 0
@@ -137,11 +138,18 @@ class Model:
         #   Randomly choose the number of agents
         self.agent_face_mask[np.random.choice(self.number_of_agents, self.amount_wearing_masks, False)] = 1
         #   The start and end node for the invisible path
-        self.hidden_start = np.array([[350,350,150,140], [300,300,100,450]])
-        self.hidden_end = np.array([[150,140,300,300], [100,450,450,100]])
+        #self.hidden_start = np.array([[350,350,150,140], [300,300,100,450]])
+        #self.hidden_end = np.array([[150,140,300,300], [100,450,450,100]])
+        self.hidden_start = [[],[]]
+        self.hidden_end = [[],[]]
+        for i in range(len(self.classroom_locations)):
 
-        self.hidden_start = np.array([[10], [10]])
-        self.hidden_end = np.array([[20], [20]])
+            self.hidden_start[0].append(Campus.start_point_y)
+            self.hidden_start[1].append(Campus.start_point_x)
+            self.hidden_end[0].append(self.classroom_locations[i][1][1])
+            self.hidden_end[1].append(self.classroom_locations[i][1][0])
+        print(self.hidden_start)
+        print(self.hidden_end)
         # creates the invisible path for vector path-following
         self.hidden_path_list = []
         self.hidden_path = []
@@ -149,14 +157,17 @@ class Model:
             for i in range(len(self.hidden_start[0])):
                 self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
                                         self.hidden_end[0][i], self.hidden_end[1][i])
+                print(self.hidden_path)
                 self.hidden_path_list.append(self.hidden_path)
                 # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
 
-        for i in range(len(self.hidden_path_list)):
-            for j in range(len(self.hidden_path_list[i])):
-                x1 = self.hidden_path_list[i][j][1]
-                y1 = self.hidden_path_list[i][j][0]
-                self.hidden_map_list[i][y1][x1] = 1 + j
+            for i in range(len(self.hidden_path_list)):
+                for j in range(len(self.hidden_path_list[i])):
+                    x1 = self.hidden_path_list[i][j][1]
+                    y1 = self.hidden_path_list[i][j][0]
+                    self.hidden_map_list[i][y1][x1] = 1 + j
+
+
         self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
         self.infected_positions = np.array(self.positions[:, self.infected_positions])
 
@@ -506,13 +517,13 @@ class Model:
                     self.velocity[0, spawning_counter] = 0
                     self.velocity[1, spawning_counter] = -1
                     spawning_counter = spawning_counter + 1
-                    print(spawning_counter)
+                    #print(spawning_counter)
 
                 # update all agent positions with velocity
                 self.positions += self.velocity
 
                 #   Change random movement to 0 after x turns
-                print(self.count)
+                #print(self.count)
                 self.count += 1
                 if self.count == 200:
                     self.random_movement = 1
