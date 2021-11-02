@@ -12,6 +12,16 @@ from OMDM.Maps import create_map, create_map_from_img
 from OMDM.Path import make_grid, find_path
 from OMDM.Campus import Campus
 
+#   Genome Constants
+minimum_population = 100
+maximum_population = 500
+minimum_distancing = 0.1
+maximum_distancing = 4.1
+minimum_percentage = 0.01
+maximum_percentage = 1.00
+frequency_counter = 1
+frequency_denominator = 8
+
 
 class Model:
     """
@@ -63,6 +73,7 @@ class Model:
         
         #   Parameters that are static to the model
         #   Taken from constants
+        self.iteration_counter = 0
         self.world_size = 600
         self.pathfinding_range = 3
         self.proximity_infection_chance = 0.7
@@ -186,8 +197,8 @@ class Model:
             self.hidden_start[1].append(Campus.start_point_x)
             self.hidden_end[0].append(self.classroom_locations[i][1][1])
             self.hidden_end[1].append(self.classroom_locations[i][1][0])
-        print(self.hidden_start)
-        print(self.hidden_end)
+        '''print(self.hidden_start)
+        print(self.hidden_end)'''
         # creates the invisible path for vector path-following
         self.hidden_path_list = []
         self.hidden_path = []
@@ -201,8 +212,8 @@ class Model:
                 print(self.hidden_path)
                 self.hidden_path_list.append(self.hidden_path)
                 # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
-                print("List: ")
-                print(self.hidden_path_list)
+                '''print("List: ")
+                print(self.hidden_path_list)'''
 
             for i in range(len(self.hidden_path_list)):
                 for j in range(len(self.hidden_path_list[i])):
@@ -252,20 +263,25 @@ class Model:
         #   Checks if the variable was assigned in __init__ already.
         if not self.number_of_agents:
             #   Range 100 - 5000 agents
-            self.number_of_agents = 100 + round(parameters["number_of_agents"] * 4900)
+            self.number_of_agents = minimum_population + \
+                round(parameters["number_of_agents"] * (maximum_population - minimum_population))
         #   Parameters controlled by the Evolutionary Algorithm
         #   Range:  0.1 - 4.1 meters
-        self.social_distancing = 0.1 + round(parameters["social_distancing"] * 4, 2)
+        self.social_distancing = minimum_distancing + \
+            round(parameters["social_distancing"] * (maximum_distancing - minimum_distancing), 2)
         #   Range:  1% - 100%   Decimal rounded to hundredths.
-        self.hand_hygiene = 0.01 + round(parameters["hand_hygiene"] * 0.99, 2)
+        self.hand_hygiene = minimum_percentage + \
+            round(parameters["hand_hygiene"] * (maximum_percentage - minimum_percentage), 2)
         #   Range:  1% - 100%   Decimal rounded to hundredths.
-        self.face_masks = 0.01 + round(parameters["face_masks"] * 0.99, 2)
+        self.face_masks = minimum_percentage + \
+            round(parameters["face_masks"] * (maximum_percentage - minimum_percentage), 2)
         #   Range:  1/8 - 8/8 hour/school day
-        self.key_object_disinfection = (1 + round(parameters["key_object_disinfection"] * 7)) / 8
-        #   Range:  1/16 - 8/16 hour/school day
-        self.surface_disinfection = (1 + round(parameters["surface_disinfection"] * 7)) / 16
+        self.key_object_disinfection = (frequency_counter +
+                                        round(parameters["key_object_disinfection"] *
+                                        (frequency_denominator - frequency_counter))) / frequency_denominator
         #   Range:  1% - 100%   Decimal rounded to hundredths.
-        self.face_touching_avoidance = 0.01 + round(parameters["face_touching_avoidance"] * 0.99, 2)
+        self.face_touching_avoidance = minimum_percentage + \
+            round(parameters["face_touching_avoidance"] * (maximum_percentage - minimum_percentage), 2)
         #   Range:  1% - 100%   Decimal rounded to hundredths.
         #   self.face_shields = 0.01 + round(parameters["face_shields"] * 0.99, 2)
         #   Range:  1 - 3600 seconds
@@ -273,6 +289,8 @@ class Model:
         #   These parameters are medium priority.
         #   Range:  1% - 100%   Decimal rounded to hundredths.
         #   self.respiratory_hygiene = 0.01 + round(parameters["respiratory_hygiene"] * 0.99, 2)
+        #   Range:  1/16 - 8/16 hour/school day
+        #   self.surface_disinfection = (1 + round(parameters["surface_disinfection"] * 7)) / 16
         '''
         self.face_touching_avoidance = parameters["face_touching_avoidance"]
         '''
@@ -299,10 +317,10 @@ class Model:
         self.hand_hygiene = parameters["hand_hygiene"]
         self.face_masks = parameters["face_masks"]
         self.key_object_disinfection = parameters["key_object_disinfection"]
-        self.surface_disinfection = parameters["surface_disinfection"]
         self.face_touching_avoidance = parameters["face_touching_avoidance"]
         '''
         self.respiratory_hygiene = parameters["respiratory_hygiene"]
+        self.surface_disinfection = parameters["surface_disinfection"]
         self.face_shields = parameters["face_shields"]
         self.ventilation_of_indoor_spaces = parameters["ventilation_of_indoor_spaces"]
         '''
@@ -365,7 +383,6 @@ class Model:
                 self.positions[1][i], destinations[0][i], destinations[1][i])
         return new_path
 
-
     def disinfect_surfaces(self, surfaces):
         """
         A functions that removes infection from all surfaces.
@@ -386,7 +403,7 @@ class Model:
         @rtype:
         """
         #   Creating an array of values to use for spawning agents at every hundred iteration
-        self.iteration_counter = 0
+        
 
         # Counting variable for initiating agent spawning at defined position
         spawning_counter = 0
@@ -622,8 +639,8 @@ class Model:
             self.iteration_counter = self.iteration_counter + 1
             # if statement true-> finish simulation
             if self.iteration_counter == self.simulation_time:
-                print(self.iteration_counter)
-                break;
+                #   print(self.iteration_counter)
+                break
             #   OpenCV Visualization
             if self.visualize:
                 dim = (600, 600)
@@ -637,20 +654,22 @@ class Model:
         if self.visualize:
             cv2.destroyAllWindows()
 
-
-        return {"number_currently_infected": self.number_currently_infected,
+        return {
+                "number_currently_infected": self.number_currently_infected,
                 "infected_history": self.infected_history,
                 "number_total_infected": self.number_total_infected,
-                "number_of_agents": self.number_of_agents}
+                "number_of_agents": self.number_of_agents
+                }
+
 
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
     from OMDM.Individual import Individual
     from OMDM.Fitness import population_spread_fitness
-    new_individual = Individual(0.2, genome_length=7)
+    new_individual = Individual(0.2, genome_length=6)
     new_model = Model(new_individual.genome.genome, visualize=True)
     new_individual.phenotype = new_model.simulate()
     print(new_individual.phenotype)
-    new_individual.fitness = population_spread_fitness(new_individual.phenotype, 5000, 1, 1)
+    new_individual.fitness = population_spread_fitness(new_individual.phenotype, 500, 1, 1)
     print(new_individual.fitness)
     

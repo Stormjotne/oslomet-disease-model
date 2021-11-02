@@ -31,7 +31,12 @@ class Evolution:
         self.population_size = hyper_parameters["population_size"]
         self.surviving_individuals = hyper_parameters["surviving_individuals"]
         self.number_of_parents = hyper_parameters["number_of_parents"]
+        self.desired_agent_population = hyper_parameters["desired_agent_population"]
+        self.desired_agent_population_weight = hyper_parameters["desired_agent_population_weight"]
+        self.relative_spread_weight = hyper_parameters["relative_spread_weight"]
         self.best_individual = None
+        self.fitness_trend = []
+        self.parameter_trend = []
         self.generation = 0
         #   Initialize population
         self.population = Population(self.population_size, self.surviving_individuals, self.number_of_parents,
@@ -50,6 +55,7 @@ class Evolution:
     @staticmethod
     def placeholder_incubate(individual):
         """
+        @deprecated
         Generate a phenotype to be evaluated.
         :param individual:
         :return: Individual's Phenotype
@@ -62,6 +68,7 @@ class Evolution:
     @staticmethod
     def incubate(individual):
         """
+        @deprecated
         Generate a phenotype to be evaluated by calling the Model object.
         :param individual:
         :return: Individual's Phenotype
@@ -71,29 +78,48 @@ class Evolution:
         return phenotype
     
     @staticmethod
-    def evaluate(individual):
+    def evaluate(individual, d_pop, pop_weight, spread_weight):
         """
-        Evalute the fitness of an individual in its given environment.
-        :param individual:
+        @deprecated
+        Evaluate the fitness of an individual in its given environment.
+        :param individual:  Individual object
+        :param d_pop:   Desired Population
+        :type d_pop:    Integer
+        :param pop_weight:  The weight of the relative population.
+        :type pop_weight:   Float
+        :param spread_weight:   The weight of the relative spread of disease.
+        :type spread_weight:    Float
         :return: Individual's Fitness
+        :rtype: Float
         """
         #   Send the phenotype to a function that calculates its fitness.
         #   fitness = Fitness.relative_spread_fitness(individual.phenotype)
-        fitness = Fitness.population_spread_fitness(individual.phenotype, 5000, 1, 1)
+        fitness = Fitness.population_spread_fitness(individual.phenotype, d_pop, pop_weight, spread_weight)
         return fitness
     
     def generate(self, individual):
         """
-        Generate the phenotype and fitness score of an individual.
-        :param individual:
-        :type individual:
-        :return:
-        :rtype:
+        Evaluate the fitness of an individual in its given environment.
+        :param individual:  Individual object
+        :param d_pop:   Desired Population
+        :type d_pop:    Integer
+        :param pop_weight:  The weight of the relative population.
+        :type pop_weight:   Float
+        :param spread_weight:   The weight of the relative spread of disease.
+        :type spread_weight:    Float
+        :return: Individual
+        :rtype: Individual
         """
         if self.printout:
             print(current_process().name, end=" ")
-        individual.phenotype = self.incubate(individual)
-        individual.fitness = self.evaluate(individual)
+        new_model = Model(individual.genome.genome, normalized=True, static_population=False)
+        individual.phenotype = new_model.simulate()
+        individual.fitness = Fitness.population_spread_fitness(
+                                individual.phenotype,
+                                self.desired_agent_population,
+                                self.desired_agent_population_weight,
+                                self.relative_spread_weight
+                                )
         return individual
 
     def select_parents(self):
@@ -145,12 +171,18 @@ class Evolution:
             parents = self.select_parents()
             #   Save a pointer to the best individual.
             self.best_individual = self.population.individuals[0]
+            #   Save all the fitness scores of the generation
+            
+            #   Save all parameter values of the generation
             #   Update the next generation by reproduction.
             self.population.individuals = self.population.reproduce(parents)
             #   Iterate
             self.generation += 1
         #   Return the best individual or whatever else at the end.
-        return self.best_individual
+        return {
+                "best_individual": self.best_individual,
+                
+                }
 
 
 #   Use this conditional to test the class by running it "standalone".

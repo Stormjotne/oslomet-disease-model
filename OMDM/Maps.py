@@ -12,14 +12,14 @@ width = img.shape[1]
 x_coordinates = []
 y_coordinates = []
 
-#print(height)
-#print(width)
-#print (img[0][0][0])
-#world_map = np.zeros((height, width), np.int32)
-#infected_surfaces_map = np.full((height, width), -1)
+#   print(height)
+#   print(width)
+#   print (img[0][0][0])
+#   world_map = np.zeros((height, width), np.int32)
+#   infected_surfaces_map = np.full((height, width), -1)
 
 
-#def create_map_from_img(world_map):
+#   def create_map_from_img(world_map):
 
 def create_map_from_img(world_map,infected_surfaces_map):
     classroom_entrance_list = []

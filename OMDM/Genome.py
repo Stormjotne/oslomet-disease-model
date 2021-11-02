@@ -23,7 +23,7 @@ class Genome:
         :type input_genomes:
         """
         self.genome_labels = ["number_of_agents", "social_distancing", "hand_hygiene", "face_masks",
-            "key_object_disinfection", "surface_disinfection", "face_touching_avoidance",
+            "key_object_disinfection", "face_touching_avoidance", "surface_disinfection",
             "face_shields", "ventilation_of_indoor_spaces", "respiratory_hygiene",
             "test_based_screening", "vaccination", "cohort_size", "electives"]
         self.mutation_probability = mutation_probability
@@ -142,7 +142,7 @@ class Genome:
 
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
-    new_genome = Genome(0.20, genome_length=7)
+    new_genome = Genome(0.20, genome_length=6)
     print(new_genome.genome)
     copied_genome = Genome(0.20, input_genome=new_genome.genome)
     print(copied_genome.genome)
