@@ -195,8 +195,10 @@ def pathfinding(grid, start, end_goal):
 #def find_path(grid,world_map,world_size, start_cor, end_cor):
 def find_path(grid, world_map, world_size, start_cor_y, start_cor_x, end_cor_y, end_cor_x):
 
-    start_cor_y = start_cor_y.astype(np.int32)
-    start_cor_x = start_cor_x.astype(np.int32)
+    #start_cor_y = start_cor_y.astype(np.int32)
+    #start_cor_x = start_cor_x.astype(np.int32)
+    start_cor_y = start_cor_y
+    start_cor_x = start_cor_x
 
 
     end_cor_y = end_cor_y
