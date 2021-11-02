@@ -80,8 +80,26 @@ class Model:
         #   Map that will contain the infectious surfaces.
         self.infected_surfaces_map = np.full((self.world_size, self.world_size), -1)
         #self.world_map = create_map(self.world_map, self.world_size)
+        if not os.path.isfile("imported_map_information"):
 
-        self.world_map,self.infected_surfaces_map,self.classroom_locations = create_map_from_img(self.world_map, self.infected_surfaces_map)
+            self.world_map,self.infected_surfaces_map,self.classroom_locations,self.start_location_x,self.start_location_y = create_map_from_img(self.world_map, self.infected_surfaces_map)
+            with open("imported_map_information", 'wb') as f:
+                Campus.start_point_y = self.start_location_y
+                Campus.start_point_x = self.start_location_x
+                pickle.dump(self.world_map, f)
+                pickle.dump(self.infected_surfaces_map,f)
+                pickle.dump(self.classroom_locations,f)
+                pickle.dump(self.start_location_x,f)
+                pickle.dump(self.start_location_y,f)
+        else:
+            with open("imported_map_information", 'rb') as f:
+                self.world_map = pickle.load(f)
+                self.infected_surfaces_map = pickle.load(f)
+                self.classroom_locations = pickle.load(f)
+                self.start_location_x = pickle.load(f)
+                self.start_location_y = pickle.load(f)
+                Campus.start_point_y = self.start_location_y
+                Campus.start_point_x = self.start_location_x
 
         #   Map that will contain the invisible paths that the agents will follow using vectors
         self.hidden_map = np.zeros((self.world_size, self.world_size))
@@ -173,9 +191,10 @@ class Model:
         # creates the invisible path for vector path-following
         self.hidden_path_list = []
         self.hidden_path = []
+
         if not os.path.isfile("path_list"):
 
-        #if not self.hidden_path:
+
             for i in range(len(self.hidden_start[0])):
                 self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
                                         self.hidden_end[0][i], self.hidden_end[1][i])
@@ -196,6 +215,8 @@ class Model:
         else:
             with open("path_list", 'rb') as f:
                 self.hidden_map_list = pickle.load(f)
+
+
 
         self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
         self.infected_positions = np.array(self.positions[:, self.infected_positions])
