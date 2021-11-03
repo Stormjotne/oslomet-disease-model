@@ -3,7 +3,7 @@
 """
 import os
 from multiprocessing import Pool, current_process
-from time import sleep
+from time import sleep, time
 from random import random, choice, shuffle
 
 from .Population import Population
@@ -17,12 +17,13 @@ class Evolution:
     Implement the Evolutionary Algorithm in this class.
     """
 
-    def __init__(self, hyper_parameters, printout=False):
+    def __init__(self, hyper_parameters, printout=False, name="Default"):
         """
         Put any declarations of object fields/variables in this method.
         :param hyper_parameters: Dict
         """
         self.printout = printout
+        self.name = name
         self.number_of_threads = os.cpu_count() - 1
         self.number_of_generations = hyper_parameters["number_of_generations"]
         self.genome_length = hyper_parameters["genome_length"]
@@ -35,8 +36,8 @@ class Evolution:
         self.desired_agent_population_weight = hyper_parameters["desired_agent_population_weight"]
         self.relative_spread_weight = hyper_parameters["relative_spread_weight"]
         self.best_individual = None
-        self.fitness_trend = []
-        self.parameter_trend = []
+        self.fitness_trend = {}
+        self.parameter_trend = {}
         self.generation = 0
         #   Initialize population
         self.population = Population(self.population_size, self.surviving_individuals, self.number_of_parents,
@@ -101,18 +102,18 @@ class Evolution:
         """
         Evaluate the fitness of an individual in its given environment.
         :param individual:  Individual object
-        :param d_pop:   Desired Population
-        :type d_pop:    Integer
-        :param pop_weight:  The weight of the relative population.
-        :type pop_weight:   Float
-        :param spread_weight:   The weight of the relative spread of disease.
-        :type spread_weight:    Float
         :return: Individual
         :rtype: Individual
         """
         if self.printout:
             print(current_process().name, end=" ")
-        new_model = Model(individual.genome.genome, normalized=True, static_population=False)
+        new_model = Model(
+                        individual.genome.genome,
+                        self.desired_agent_population,
+                        normalized=True,
+                        static_population=False,
+                        visualize=True
+                        )
         individual.phenotype = new_model.simulate()
         individual.fitness = Fitness.population_spread_fitness(
                                 individual.phenotype,
@@ -132,6 +133,25 @@ class Evolution:
         #   self.population.individuals.sort(key=lambda element: element.fitness, reverse=True)
         best_individuals = self.population.individuals[:self.number_of_parents]
         return best_individuals
+        
+    def save_fitness_trend(self):
+        """
+        Store all the fitness scores in the current population in a list.
+        :return:
+        :rtype:
+        """
+        return [x.fitness for x in self.population.individuals]
+        
+    def save_parameter_trend(self):
+        """
+        Store all the fitness scores in the current population in a dictionary.
+        :return:
+        :rtype:
+        """
+        parameter_dictionary = {}
+        for key in self.population.individuals[0].phenotype["parameters"]:
+            parameter_dictionary[key] = [x.phenotype["parameters"][key] for x in self.population.individuals]
+        return parameter_dictionary
         
     def evolve(self):
         """
@@ -172,17 +192,23 @@ class Evolution:
             #   Save a pointer to the best individual.
             self.best_individual = self.population.individuals[0]
             #   Save all the fitness scores of the generation
-            
+            self.fitness_trend["gen_{}".format(self.generation)] = self.save_fitness_trend()
             #   Save all parameter values of the generation
+            self.parameter_trend["gen_{}".format(self.generation)] = self.save_parameter_trend()
             #   Update the next generation by reproduction.
             self.population.individuals = self.population.reproduce(parents)
             #   Iterate
             self.generation += 1
-        #   Return the best individual or whatever else at the end.
-        return {
+        
+        evolutionary_object = {
                 "best_individual": self.best_individual,
-                
+                "fitness_trend": self.fitness_trend,
+                "parameter_trend": self.parameter_trend
                 }
+        #   Export EA Statistics to JSON and/or plots, etc.
+        Data.export_ea(ea_id=self.name + "_" + str(time()), evo_obj=evolutionary_object)
+        #   Return the best individual or whatever else at the end.
+        return evolutionary_object
 
 
 #   Use this conditional to test the class by running it "standalone".

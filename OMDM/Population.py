@@ -38,10 +38,12 @@ class Population:
     def reproduce(self, parents):
         """
         Generate offspring and/or random mutations.
+        Use reverse sorting if the fitness functioning is a maximisation problem, otherwise leave it out.
         :param parents:
         :return: The Next Generation
         """
-        self.individuals.sort(key=lambda element: element.fitness, reverse=True)
+        #   self.individuals.sort(key=lambda element: element.fitness, reverse=True)
+        self.individuals.sort(key=lambda element: element.fitness)
         #   Individuals surviving to the next generation.
         retained_adults = self.individuals[:self.surviving_individuals]
         next_generation = retained_adults if retained_adults else []

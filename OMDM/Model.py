@@ -12,9 +12,8 @@ from OMDM.Maps import create_map, create_map_from_img
 from OMDM.Path import make_grid, find_path
 from OMDM.Campus import Campus
 
-#   Genome Constants
+#   Genome Interpretation Constants
 minimum_population = 100
-maximum_population = 500
 minimum_distancing = 0.1
 maximum_distancing = 4.1
 minimum_percentage = 0.01
@@ -27,7 +26,7 @@ class Model:
     """
     Implement the Agent-based Model in this class.
     """
-    def __init__(self, parameters, normalized=True, static_population=36, visualize=False):
+    def __init__(self, parameters, maximum_population, normalized=True, static_population=36, visualize=False):
         """
         Put any declarations of object fields/variables in this method.
         :param parameters:
@@ -45,7 +44,8 @@ class Model:
         self.infected_history = []
         self.number_total_infected = 0
         #   Model outputs end here.
-        
+        #   Desired size of agent population
+        self.maximum_population = maximum_population
         #   Parameters controlled by the Evolutionary Algorithm
         #   Population (Number of Agents) (Can be static for testing)
         self.number_of_agents = static_population
@@ -264,7 +264,7 @@ class Model:
         if not self.number_of_agents:
             #   Range 100 - 5000 agents
             self.number_of_agents = minimum_population + \
-                round(parameters["number_of_agents"] * (maximum_population - minimum_population))
+                round(parameters["number_of_agents"] * (self.maximum_population - minimum_population))
         #   Parameters controlled by the Evolutionary Algorithm
         #   Range:  0.1 - 4.1 meters
         self.social_distancing = minimum_distancing + \
@@ -658,8 +658,15 @@ class Model:
                 "number_currently_infected": self.number_currently_infected,
                 "infected_history": self.infected_history,
                 "number_total_infected": self.number_total_infected,
-                "number_of_agents": self.number_of_agents
+                "parameters": {
+                    "number_of_agents": self.number_of_agents,
+                    "social_distancing": self.social_distancing,
+                    "hand_hygiene": self.hand_hygiene,
+                    "face_masks": self.face_masks,
+                    "key_object_disinfection": self.key_object_disinfection,
+                    "face_touching_avoidance": self.face_touching_avoidance
                 }
+        }
 
 
 #   Use this conditional to test the class by running it "standalone".
