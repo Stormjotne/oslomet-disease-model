@@ -71,7 +71,14 @@ class Model:
         self.mask_protection_rate = 0.5
         #   Taken from classroom_pathfinding and what already existed in this module
         self.max_speed = 2
-        self.dispersion_range = 5
+        #self.dispersion_range = 5
+        self.dispersion_range = int(round(self.social_distancing * 5))
+        
+        if self.dispersion_range == 0:
+            self.dispersion_range = 1
+        elif self.dispersion_range > 20:
+            self.dispersion_range = 20
+
         self.attraction_range = 20
         self.velocity_range = 10
         self.infection_range = 3
