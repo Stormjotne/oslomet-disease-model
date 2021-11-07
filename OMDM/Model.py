@@ -245,12 +245,11 @@ class Model:
         self.collision_map = np.zeros((self.world_size, self.world_size))
         # Adding agents to this map
         self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 10
-        #   Unsure if this is current or total
-        nr_of_infected = []
+
         self.path = []
         self.random_movement = 1
         self.count = 0
-        #   Creating an array of values to use for spawning agents at every hundred iteration
+        #   Creating an array of values to use for spawning agents at every given iteration
         ite_between = 20
         self.spawn_array = np.full(self.number_of_agents, None)
         for i in range(self.number_of_agents):
@@ -409,15 +408,12 @@ class Model:
         @return:
         @rtype:
         """
-        #   Creating an array of values to use for spawning agents at every hundred iteration
+
         
 
         # Counting variable for initiating agent spawning at defined position
         spawning_counter = 0
-        minute = 0
-        hour = 0
-        hand_infection_count = 0
-        nr_of_infected = []
+
         while True:
 
             # Matrices to calculate distances between agents by using positions at each iteration
@@ -461,14 +457,14 @@ class Model:
                             self.agent_list_susceptible[infection_cases[1, infections_where[0][i]]] = 0
             
             if dispersion_cases.shape[1] >= 1:
-                #   This would be where you implement social distancing as a force moving agent apart.
-                #   This is done in BOID simulations so look into that.
+                #   Detect if distance between agents <= social_distansing
+                #
                 pass
             if attraction_cases.shape[1] >= 1:
-                #   Make agents cluster - again BOIDS
+                #   Make agents cluster - again BOIDS-Not used!
                 pass
             if velocity_cases.shape[1] >= 1:
-                #   Make agents align their movement - BOIDS
+                #   Make agents align their movement - BOIDS-Not used!
                 pass
 
             #   Random Movement
@@ -477,16 +473,16 @@ class Model:
                 #   Init infected_surface_perception outside loop scope
                 infected_surface_perception = None
                 infected_surfaces_location = None
-                #   Try to replace nr_of_agents with spawning counter-1
+
                 for i0 in range(self.number_of_agents):
-                    wall_perception = self.world_map[
+                    wall_perception = self.world_map[                                               #Give agents a percetion equal to max_spedd +1, used to deect walls
                                       (self.positions[0, i0] - self.max_speed).astype(np.int32):(
                                         self.positions[0, i0] + self.max_speed + 1).astype(
                                           np.int32),
                                       (self.positions[1, i0] - self.max_speed).astype(np.int32):(
                                         self.positions[1, i0] + self.max_speed + 1).astype(
                                           np.int32)]
-                    agent_percetion = self.collision_map[
+                    agent_percetion = self.collision_map[                                           #Give agents a perception equal to dispersion_range +1, used to detect other agents
                                       (self.positions[0, i0] - self.dispersion_range).astype(np.int32):(
                                         self.positions[0, i0] + self.dispersion_range + 1).astype(
                                           np.int32),
@@ -500,7 +496,7 @@ class Model:
                                                   (self.positions[1, i0] - 1).astype(np.int32):(
                                                           self.positions[1, i0] + 2).astype(
                                                       np.int32)]
-                    #   Looking for values of walls and agents
+                    #   Looking for values of walls and agents and storing corresponding coordinates
                     wall_location = np.array(np.where(wall_perception == 20))
                     agent_location = np.array(np.where(agent_percetion == 10))
 
@@ -557,16 +553,17 @@ class Model:
                                 x1 = self.hidden_path_list[i][j][1]
                                 y1 = self.hidden_path_list[i][j][0]
                                 self.hidden_map_list[i][y1][x1] = 1 + j'''
-                    #   Needs attention
-                    #   Subtracting velocity from agent i0 equals to sum of agent_location array
+                    #   This is where a we assign a new path for agent i0
+                    #   Decreasing the x and y velocity of agent i0 equal to sum of agent_location array
                     self.velocity[:, i0] -= np.sum(agent_location, 1) * 8
-                    #   Subtracting velocity from agent i0 equals to sum of wall_location array
+                    #   Decreasing the x and y velocity of agent i0 equal to sum of wall_location array
                     self.velocity[:, i0] -= np.sum(wall_location, 1) * 4
+                    #   Increasing  the x and y velocity of agent i0 equal to sum of path_location array
                     self.velocity[:, i0] += np.sum(path_location, 1) * 30
 
-                self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5
-                self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)
-                self.velocity *= self.max_speed / self.velocity_length
+                self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5     #Add randomness to to movement, higher multiplicator results in greater change of direction per iteration
+                self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)      #Calculating the magnitude of the velocity vector
+                self.velocity *= self.max_speed / self.velocity_length                      #Setting the velocity relative to max_speed
 
                 #   Cancel the velocity change for agents who are not supposed to move randomly
                 cancel_velocity = np.array(np.where(self.agent_movement_mode == 1))
@@ -586,12 +583,12 @@ class Model:
                 self.agent_list_susceptible[:] = True
                 self.agent_list_susceptible[stay] = False
 
-                #
+                #Making sure agents are spawing with an interval equal to ite_between
                 if np.any(self.spawn_array[:] == self.iteration_counter):
                     self.velocity[0, spawning_counter] = 0
                     self.velocity[1, spawning_counter] = -1
                     spawning_counter = spawning_counter + 1
-                    #print(spawning_counter)
+
 
                 # update all agent positions with velocity
                 self.positions += self.velocity
@@ -623,30 +620,29 @@ class Model:
             self.positions[above_world_size[0, :], above_world_size[1, :]] = 0
             self.positions[below_world_size[0, :], below_world_size[1, :]] = self.world_size - 1
             self.world[:, :, :] = self.D3_world_map
-
+            #Setting RGB value equal to white for visualization of healthy agents
             self.world[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32), :] = 10
             infected_positions = np.array(np.where(self.agent_list_infected == 1))
             infected_positions = np.array(self.positions[:, infected_positions])
-            # print(infected_positions)
+            # Setting RGB value equal to red for visualization of infected agents
             self.world[infected_positions[0].astype(np.int32), infected_positions[1].astype(np.int32), 0:2] = 0
 
-            #   Replaced old infection summary
-            #   nr_of_infected.append(np.sum(self.agent_list_infected))
+            #Updates currently infected
             self.number_currently_infected = np.sum(self.agent_list_infected)
+            #Adds up to count total number of infected
             self.infected_history.append(self.number_currently_infected)
             #   Needs attention
             self.number_total_infected += (self.number_currently_infected - self.infected_history[self.iteration_counter - 1])
 
-            #   Erasing old positions
+            #   Erasing old positions for collision detection
             self.collision_map[:, :] = 0
-            # Updating new positions
+            # Updating new positions for collision detection
             self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 1
             
             #   Plus operation for while loop was moved from the top
             self.iteration_counter = self.iteration_counter + 1
             # if statement true-> finish simulation
             if self.iteration_counter == self.simulation_time:
-                #   print(self.iteration_counter)
                 break
             #   OpenCV Visualization
             if self.visualize:
@@ -654,8 +650,6 @@ class Model:
                 world_resized = cv2.resize(self.world, dim, interpolation=cv2.INTER_AREA)
                 cv2.imshow('frame', world_resized)
     
-                #   time.sleep(0.05)
-                #   print(time.time() - beginning_time)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         if self.visualize:
