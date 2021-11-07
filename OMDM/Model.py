@@ -682,7 +682,6 @@ class Model:
                 self.disinfect_surfaces()
                 self.disinfect_surface_counter = 0
 
-            print(self.agent_list_infected_hands)
 
             self.hand_wash_counter += 1
             if self.hand_wash_counter == self.hand_wash_interval:
