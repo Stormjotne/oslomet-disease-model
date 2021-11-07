@@ -123,6 +123,7 @@ class Model:
         self.hidden_map = np.zeros((self.world_size, self.world_size))
         self.hidden_map_list = []
 
+
         for i in range(len(self.classroom_locations)):
             self.hidden_map_list.append(np.copy(self.hidden_map))
 
@@ -163,6 +164,9 @@ class Model:
         self.virus_ttl_agent = range(1, 9)
         #   agent recovery rate
         self.agent_recovery_rate = range(7, 14)
+
+        # Counting variable for disinfecting surfaces
+        self.disinfect_surface_counter = 0
         
         self.agent_list_infected = np.random.rand(self.number_of_agents) > 1
         self.agent_list_infected[5] = 1
@@ -198,6 +202,7 @@ class Model:
         #self.hidden_end = np.array([[150,140,300,300], [100,450,450,100]])
         self.hidden_start = [[],[]]
         self.hidden_end = [[],[]]
+        print(self.classroom_locations)
         for i in range(len(self.classroom_locations)):
 
             self.hidden_start[0].append(Campus.start_point_y)
@@ -389,18 +394,20 @@ class Model:
                 self.positions[1][i], destinations[0][i], destinations[1][i])
         return new_path
 
-    def disinfect_surfaces(self, surfaces):
+    def disinfect_surfaces(self):
         """
         A functions that removes infection from all surfaces.
         @return:
         @rtype:
         """
+        surfaces = np.array(np.where(self.infected_surfaces_map>0))
+
         for i in range(len(surfaces[0])):
             y = surfaces[0][i]
             x = surfaces[1][i]
             self.infected_surfaces_map[y][x] = 0
-    
-        return self.infected_surfaces_map
+        return
+        #return self.infected_surfaces_map
         
     def simulate(self):
         """
@@ -638,7 +645,15 @@ class Model:
             self.collision_map[:, :] = 0
             # Updating new positions for collision detection
             self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 1
-            
+
+            # iterete the surface disinfect counter and if it is time, disinfect all surfaces.
+            self.disinfect_surface_counter += 1
+            if self.disinfect_surface_counter == int(self.key_object_disinfection * 1000):
+
+                self.disinfect_surfaces()
+                self.disinfect_surface_counter = 0
+
+
             #   Plus operation for while loop was moved from the top
             self.iteration_counter = self.iteration_counter + 1
             # if statement true-> finish simulation
