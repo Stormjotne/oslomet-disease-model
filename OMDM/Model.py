@@ -77,7 +77,7 @@ class Model:
         self.world_size = 600
         self.pathfinding_range = 3
         self.proximity_infection_chance = 0.7
-        self.surface_infection_chance = 0.2
+        self.surface_infection_chance = 0.05
         self.self_infection_chance = 0.05
         self.mask_protection_rate = 0.5
         #   Taken from classroom_pathfinding and what already existed in this module
@@ -167,6 +167,9 @@ class Model:
 
         # Counting variable for disinfecting surfaces
         self.disinfect_surface_counter = 0
+        # Counting the iteration since last self infection check
+        self.self_infection_counter = 0
+        self.self_infection_check_rate = 100
         
         self.agent_list_infected = np.random.rand(self.number_of_agents) > 1
         self.agent_list_infected[5] = 1
@@ -535,12 +538,9 @@ class Model:
                                 x = self.positions[1][i0].astype(np.int32) + infected_surfaces_location[1][i]
                                 self.infected_surfaces_map[y][x] += 1
                         if self.agent_list_infected[i0] == 0:
-                            virus_amount = int(np.amax(infected_surface_perception, initial=0) /2)
+                            virus_amount = int(np.amax(infected_surface_perception, initial=0))
                             if random() <= (self.surface_infection_chance * virus_amount):
-                                if int(virus_amount * 0.2) == 0 and self.agent_list_infected_hands[i0] == 0:
-                                    self.agent_list_infected_hands[i0] = 1
-                                elif self.agent_list_infected_hands[i0] < int(virus_amount * 0.2):
-                                    self.agent_list_infected_hands[i0] = int(virus_amount * 0.2)
+                                self.agent_list_infected_hands[i0] += 1
 
                     
                     #   Hidden path interaction
@@ -614,18 +614,21 @@ class Model:
                 self.positions += self.velocity
 
                 # Self infection check:
-                if np.any(self.agent_list_infected_hands > 0):
-                    infected_hands = np.array(np.where(self.agent_list_infected_hands > 0))
-                    for agent in infected_hands[0]:
-                        if self.agent_face_touching_avoidance[agent] and self.agent_list_susceptible[agent]:
-                            if random() <= (self.self_infection_chance * self.agent_list_infected_hands[agent] * 0.5):
-                                self.agent_list_infected[agent] = 1
-                                self.agent_list_susceptible[agent] = 0
+                if self.self_infection_counter == self.self_infection_check_rate:
+                    if np.any(self.agent_list_infected_hands > 0):
+                        infected_hands = np.array(np.where(self.agent_list_infected_hands > 0))
+                        for agent in infected_hands[0]:
+                            if self.agent_face_touching_avoidance[agent] and self.agent_list_susceptible[agent]:
+                                if random() <= (self.self_infection_chance * self.agent_list_infected_hands[agent] * 0.5):
+                                    self.agent_list_infected[agent] = 1
+                                    self.agent_list_susceptible[agent] = 0
 
-                        elif not self.agent_face_touching_avoidance[agent] and self.agent_list_susceptible[agent]:
-                            if random() <= self.self_infection_chance * self.agent_list_infected_hands[agent]:
-                                self.agent_list_infected[agent] = 1
-                                self.agent_list_susceptible[agent] = 0
+                            elif not self.agent_face_touching_avoidance[agent] and self.agent_list_susceptible[agent]:
+                                if random() <= self.self_infection_chance * self.agent_list_infected_hands[agent]:
+                                    self.agent_list_infected[agent] = 1
+                                    self.agent_list_susceptible[agent] = 0
+
+                            self.self_infection_counter = 0
                 #   Change random movement to 0 after x turns
                 #print(self.count)
                 self.count += 1
@@ -692,6 +695,9 @@ class Model:
 
             #   Plus operation for while loop was moved from the top
             self.iteration_counter = self.iteration_counter + 1
+
+            self.self_infection_counter += 1
+
             # if statement true-> finish simulation
             if self.iteration_counter == self.simulation_time:
                 break
