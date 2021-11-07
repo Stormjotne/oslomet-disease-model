@@ -172,6 +172,13 @@ class Model:
         self.agent_list_infected[5] = 1
         self.agent_list_susceptible = np.zeros(self.number_of_agents,dtype=bool)
         self.agent_list_infected_hands = np.zeros(self.number_of_agents)
+
+        # sets a percentage of agents to be mindfull of touching their face
+        self.agent_face_touching_avoidance = np.zeros(self.number_of_agents)
+        self.amount_avoiding = int(self.number_of_agents * self.face_touching_avoidance)
+        self.agent_face_touching_avoidance[np.random.choice(self.number_of_agents, self.amount_avoiding, False)] = 1
+
+
         # assign agents into different groups
         self.agent_list_groups = np.zeros(self.number_of_agents, dtype=np.int32)
         # contains the amount of students in groups 1,2,3. The ramainder will end up in the default group 0.
@@ -526,9 +533,15 @@ class Model:
                     if np.any(self.agent_list_infected_hands > 0):
                         infected_hands = np.array(np.where(self.agent_list_infected_hands > 0))
                         for agent in infected_hands[0]:
-                            if random() <= self.self_infection_chance * self.agent_list_infected_hands[agent]:
-                                self.agent_list_infected[agent] = 1
-                                self.agent_list_susceptible[agent] = 0
+                            if self.agent_face_touching_avoidance[agent]:
+                                if random() <= (self.self_infection_chance * self.agent_list_infected_hands[agent] * 0.5):
+                                    self.agent_list_infected[agent] = 1
+                                    self.agent_list_susceptible[agent] = 0
+
+                            elif not self.agent_face_touching_avoidance[agent]:
+                                if random() <= self.self_infection_chance * self.agent_list_infected_hands[agent]:
+                                    self.agent_list_infected[agent] = 1
+                                    self.agent_list_susceptible[agent] = 0
                     
                     #   Hidden path interaction
                     path_location = np.zeros((2, 1))
