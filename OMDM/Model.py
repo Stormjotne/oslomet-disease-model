@@ -123,9 +123,18 @@ class Model:
         self.hidden_map = np.zeros((self.world_size, self.world_size))
         self.hidden_map_list = []
 
+        #self.group_schedule = [[2,1,3],[3,2,1],[1,3,2]]
+        self.group_schedule = [[1,0,2],[2,1,0],[0,2,1]]
 
-        for i in range(len(self.classroom_locations)):
-            self.hidden_map_list.append(np.copy(self.hidden_map))
+
+        for i in range(len(self.group_schedule)):
+            self.hidden_map_list.append([])
+            for j in range(len(self.group_schedule[0])+1):
+                self.hidden_map_list[i].append(np.copy(self.hidden_map))
+
+
+        #for i in range(len(self.classroom_locations)):
+         #   self.hidden_map_list.append(np.copy(self.hidden_map))
 
         '''self.hidden_map = np.zeros((self.world_size, self.world_size))
         self.hidden_map_list = []
@@ -188,6 +197,8 @@ class Model:
         self.hand_wash_counter = 0
         # the amount of iterations before handwash
         self.hand_wash_interval = 500
+        self.schedule_iteration_counter = 0
+        self.next_class_interval = 1000
 
 
         # assign agents into different groups
@@ -197,7 +208,7 @@ class Model:
         for i in range(len(self.members_per_group)):
             self.agent_list_groups[np.random.choice(self.number_of_agents, self.members_per_group[i], False)] = i+1
 
-        self.group_schedule = [[2,1,3],[3,2,1],[1,3,2]]
+        #self.group_schedule = [[2,1,3],[3,2,1],[1,3,2]]
         #self.group_path_list =
         #for i in range(len(self.group_schedule)):
 
@@ -232,24 +243,53 @@ class Model:
         # creates the invisible path for vector path-following
         self.hidden_path_list = []
         self.hidden_path = []
-
+        self.group_path_list = []
         if not os.path.isfile("path_list"):
 
 
-            for i in range(len(self.hidden_start[0])):
-                self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
-                                        self.hidden_end[0][i], self.hidden_end[1][i])
-                print(self.hidden_path)
-                self.hidden_path_list.append(self.hidden_path)
-                # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
+            for i in range(len(self.group_schedule)):
+                self.hidden_path_list = []
+                #self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
+                #                        self.hidden_end[0][i], self.hidden_end[1][i])
+                #print(self.hidden_path)
+                #self.hidden_path_list.append(self.hidden_path)
+                for j in range(len(self.group_schedule[i])):
+                    if j == 0:
+                        self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
+                                                 Campus.start_point_y,Campus.start_point_x,
+                                                 self.classroom_locations[self.group_schedule[i][j]][1][1],
+                                                 self.classroom_locations[self.group_schedule[i][j]][1][0],
+                                                 )
+
+                        self.hidden_path_list.append(self.hidden_path)
+                    #print(len(self.group_schedule[i]))
+                    print(self.group_schedule[i])
+                    if not j+1 >= len(self.group_schedule[i]):
+                        print("j:" + str(j))
+                        self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
+                                             self.classroom_locations[self.group_schedule[i][j]][1][0],
+                                             self.classroom_locations[self.group_schedule[i][j]][1][1],
+                                             self.classroom_locations[self.group_schedule[i][j+1]][1][1],
+                                             self.classroom_locations[self.group_schedule[i][j+1]][1][0]
+                                                 )
+
+                        self.hidden_path_list.append(self.hidden_path)
+
+                    self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
+                                                 self.classroom_locations[self.group_schedule[i][j]][1][1],
+                                                 self.classroom_locations[self.group_schedule[i][j]][1][0],
+                                                 Campus.start_point_y,Campus.start_point_x
+                                                 )
+
+                                                 # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
                 '''print("List: ")
                 print(self.hidden_path_list)'''
 
-            for i in range(len(self.hidden_path_list)):
-                for j in range(len(self.hidden_path_list[i])):
-                    x1 = self.hidden_path_list[i][j][1]
-                    y1 = self.hidden_path_list[i][j][0]
-                    self.hidden_map_list[i][y1][x1] = 1 + j
+                for k in range(len(self.hidden_path_list)):
+                    for l in range(len(self.hidden_path_list[k])):
+                        x1 = self.hidden_path_list[k][l][1]
+                        y1 = self.hidden_path_list[k][l][0]
+                        self.hidden_map_list[i][k][y1][x1] = 1 + l
 
             with open("path_list", 'wb') as f:
                 pickle.dump(self.hidden_map_list,f)
@@ -258,6 +298,7 @@ class Model:
                 self.hidden_map_list = pickle.load(f)
 
 
+        self.schedule_progress = 0
 
         self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
         self.infected_positions = np.array(self.positions[:, self.infected_positions])
@@ -547,7 +588,7 @@ class Model:
                     path_location = np.zeros((2, 1))
     
                     if self.agent_vector_pathfinding[i0] == 1:
-                        hidden_path_perception = self.hidden_map_list[self.agent_list_groups[i0]][
+                        hidden_path_perception = self.hidden_map_list[self.agent_list_groups[i0]][self.schedule_progress][
                                           (self.positions[0, i0] - self.pathfinding_range).astype(np.int32):(
                                                       self.positions[0, i0] + self.pathfinding_range + 1).astype(
                                               np.int32),
@@ -686,14 +727,17 @@ class Model:
             self.hand_wash_counter += 1
             if self.hand_wash_counter == self.hand_wash_interval:
                 washes_hands = np.array(np.where(self.agent_hand_hygine))
-                print(self.agent_list_infected_hands)
                 for agent in washes_hands:
                     self.agent_list_infected_hands[agent] = 0
-                print(self.agent_list_infected_hands)
                 self.hand_wash_counter = 0
 
             #   Plus operation for while loop was moved from the top
             self.iteration_counter = self.iteration_counter + 1
+
+            self.schedule_iteration_counter += 1
+            if self.schedule_iteration_counter == self.next_class_interval:
+                if self.schedule_progress < len(self.group_schedule[0]):
+                    self.schedule_progress += 1
 
             self.self_infection_counter += 1
 
