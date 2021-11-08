@@ -91,7 +91,7 @@ def find_walls(grid, world_map, world_size):
                 cell.make_wall()
 
                 #test of anti wall-hugging
-                for extra in range(1,10):
+                for extra in range(1,2):
 
                     if i-extra > 0 and j-extra > 0:
                         cell = grid[i-extra][j-extra]
@@ -221,5 +221,5 @@ def find_path(grid, world_map, world_size, start_cor_y, start_cor_x, end_cor_y, 
 
     #print(p)
     p.reverse()
-    #print(p)
+    print(p)
     return p
