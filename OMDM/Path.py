@@ -91,7 +91,7 @@ def find_walls(grid, world_map, world_size):
                 cell.make_wall()
 
                 #test of anti wall-hugging
-                for extra in range(1,3):
+                for extra in range(1,10):
 
                     if i-extra > 0 and j-extra > 0:
                         cell = grid[i-extra][j-extra]

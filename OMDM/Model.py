@@ -164,7 +164,7 @@ class Model:
         #   School day length in hours
         self.day_length = 8
         #   Simulation length in days
-        self.simulation_length = 3
+        self.simulation_length = 9
         #   Simulation length in time step  (3600/1 seconds per hour)
         self.simulation_time = self.simulation_length * self.day_length * 3600 / self.time_step_length
         #   Virus time-to-live on surfaces in days
@@ -267,8 +267,8 @@ class Model:
                     if not j+1 >= len(self.group_schedule[i]):
                         print("j:" + str(j))
                         self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
-                                             self.classroom_locations[self.group_schedule[i][j]][1][0],
                                              self.classroom_locations[self.group_schedule[i][j]][1][1],
+                                             self.classroom_locations[self.group_schedule[i][j]][1][0],
                                              self.classroom_locations[self.group_schedule[i][j+1]][1][1],
                                              self.classroom_locations[self.group_schedule[i][j+1]][1][0]
                                                  )
@@ -738,6 +738,7 @@ class Model:
             if self.schedule_iteration_counter == self.next_class_interval:
                 if self.schedule_progress < len(self.group_schedule[0]):
                     self.schedule_progress += 1
+                    self.schedule_iteration_counter = 0
 
             self.self_infection_counter += 1
 
