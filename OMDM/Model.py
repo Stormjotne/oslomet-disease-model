@@ -84,6 +84,12 @@ class Model:
         self.max_speed = 2
         #self.dispersion_range = 5
         self.dispersion_range = int(round(self.social_distancing * 5))
+
+        self.agent_room_counter1 = 0
+        self.agent_room_counter2 = 0
+        self.agent_room_counter3 = 0
+        self.agent_room_counter4 = 0
+        self.agent_room_counter5 = 0
         
         if self.dispersion_range == 0:
             self.dispersion_range = 1
@@ -198,7 +204,7 @@ class Model:
         # the amount of iterations before handwash
         self.hand_wash_interval = 500
         self.schedule_iteration_counter = 0
-        self.next_class_interval = 1000
+        self.next_class_interval = 1200
 
 
         # assign agents into different groups
@@ -624,41 +630,89 @@ class Model:
                     #   Decreasing the x and y velocity of agent i0 equal to sum of wall_location array
                     self.velocity[:, i0] -= np.sum(wall_location, 1) * 4
                     #   Increasing  the x and y velocity of agent i0 equal to sum of path_location array
-                    self.velocity[:, i0] += np.sum(path_location, 1) * 30
+                    self.velocity[:, i0] += np.sum(path_location, 1) * 40
 
-                self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5     #Add randomness to to movement, higher multiplicator results in greater change of direction per iteration
-                self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)      #Calculating the magnitude of the velocity vector
-                self.velocity *= self.max_speed / self.velocity_length                      #Setting the velocity relative to max_speed
+                # Add randomness to to movement, higher multiplicator results in greater change of direction per iteration
+                self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5
+                # Calculating the magnitude of the velocity vector-Using L2 method. square root of sum of the squared abs values.
+                self.velocity_length[:] = np.linalg.norm(self.velocity, ord=2, axis=0)
+                # Setting the velocity relative to max_speed
+                self.velocity *= self.max_speed / self.velocity_length
 
                 #   Cancel the velocity change for agents who are not supposed to move randomly
                 cancel_velocity = np.array(np.where(self.agent_movement_mode == 1))
                 for vel in cancel_velocity:
                     self.velocity[:, vel] = 0
 
-                # Cancel velocity when located at start position
-                check_y = np.array(np.where(self.positions[0] == Campus.start_point_y))
-                check_x = np.array(np.where(self.positions[1] == Campus.start_point_x))
+                #Check if agent is at start position
+                check_y = np.array(np.where(self.positions[0].astype(np.int32) == Campus.start_point_y))
+                check_x = np.array(np.where(self.positions[1].astype(np.int32) == Campus.start_point_x))
                 stay = []
                 for i in check_y[0]:
                     if i in check_x[0]:
                         # print(i)
                         stay += [i]
+
+                #Check classroom 1
+                check_y_cl_1 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[0][1][1]))
+                check_x_cl_1 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[0][1][0]))
+                stay_cl_1 = []
+                for i in check_y_cl_1[0]:
+                    if i in check_x_cl_1[0]:
+                        stay_cl_1 += [i]
+
+                # Check classroom 2
+                check_y_cl_2 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[1][1][1]))
+                check_x_cl_2 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[1][1][0]))
+
+                stay_cl_2 = []
+                for i in check_y_cl_2[0]:
+                    if i in check_x_cl_2[0]:
+                        stay_cl_2 += [i]
+
+
+                # Check classroom 3
+                check_y_cl_3 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[2][1][1]))
+                check_x_cl_3 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[2][1][0]))
+                #print("Start")
+                #print(self.classroom_locations[2][1][1])
+
+                stay_cl_3 = []
+                for i in check_y_cl_3[0]:
+                    if i in check_x_cl_3[0]:
+                        stay_cl_3 += [i]
+                #print(stay_cl_3)
+                #Cancel velocity when agents reach destination
                 self.velocity[:, stay] = 0
-                # Use the same array so that agents cannot be infected when located at start/finish
+                self.velocity[:, stay_cl_1] = 0
+                self.velocity[:, stay_cl_2] = 0
+                self.velocity[:, stay_cl_2] = 0
+                # Use the same arrays so that agents cannot be infected when located at spawning/classroom positions
                 self.agent_list_susceptible[:] = True
                 self.agent_list_susceptible[stay] = False
-                #######
-                print(self.classroom_locations[0][1])
-                print(self.classroom_locations[1][1])
-                print(self.classroom_locations[2][1])
-                #######
+                self.agent_list_susceptible[stay_cl_1] = False
+                self.agent_list_susceptible[stay_cl_2] = False
+                self.agent_list_susceptible[stay_cl_3] = False
+
                 #Making sure agents are spawing with an interval equal to ite_between
                 if np.any(self.spawn_array[:] == self.iteration_counter):
                     self.velocity[0, spawning_counter] = 0
                     self.velocity[1, spawning_counter] = -1
                     spawning_counter = spawning_counter + 1
+                if np.all(self.velocity[:,:] == 0) == True:
+                    print("Jaddddd")
+                    print(np.all(self.velocity[:,:] == 0))
+                    self.agent_room_counter1 = len(stay_cl_1)
+                    #print("SKYT MEG")
+                    #self.agent_room_counter2 = len(stay_cl_2)
+                    #self.agent_room_counter3 = len(stay_cl_3)
+                    #self.agent_room_counter4 = len(stay_cl_4)
+                    #self.agent_room_counter5 = len(stay_cl_5)
 
-
+                if self.schedule_progress == 1 and self.agent_room_counter1>0:
+                    self.velocity[0, stay_cl_1[self.agent_room_counter1]] = 0
+                    self.velocity[1, stay_cl_1[self.agent_room_counter1]] = - 1
+                    self.agent_room_counter1 = self.agent_room_counter1 - 1
                 # update all agent positions with velocity
                 self.positions += self.velocity
 
