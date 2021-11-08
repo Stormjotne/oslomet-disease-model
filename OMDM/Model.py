@@ -76,9 +76,9 @@ class Model:
         self.iteration_counter = 0
         self.world_size = 600
         self.pathfinding_range = 3
-        self.proximity_infection_chance = 0.7
-        self.surface_infection_chance = 0.05
-        self.self_infection_chance = 0.05
+        self.proximity_infection_chance = 0.12
+        self.surface_infection_chance = 0.01
+        self.self_infection_chance = 0.01
         self.mask_protection_rate = 0.5
         #   Taken from classroom_pathfinding and what already existed in this module
         self.max_speed = 2
@@ -130,7 +130,8 @@ class Model:
         self.hidden_map_list = []
 
         #self.group_schedule = [[2,1,3],[3,2,1],[1,3,2]]
-        self.group_schedule = [[1,0,2],[2,1,0],[0,2,1]]
+        self.group_schedule = [[1,4,2],[2,3,0],[4,0,3],[3,2,1],[0,1,4]]
+
 
 
         for i in range(len(self.group_schedule)):
@@ -210,10 +211,18 @@ class Model:
         # assign agents into different groups
         self.agent_list_groups = np.zeros(self.number_of_agents, dtype=np.int32)
         #   contains the amount of students in groups 1,2,3. The ramainder will end up in the default group 0.
-        self.members_per_group = [12,10]
+        self.agent_ratio_per_group = [0.2,0.3,0.2,0.1]
+        self.members_per_group = []
+
+        for i in range(len(self.group_schedule)-1):
+            self.members_per_group.append(int(self.agent_ratio_per_group[i]*self.number_of_agents))
+
+
+        print(self.members_per_group)
         for i in range(len(self.members_per_group)):
             self.agent_list_groups[np.random.choice(self.number_of_agents, self.members_per_group[i], False)] = i+1
 
+        print(self.agent_list_groups)
         #self.group_schedule = [[2,1,3],[3,2,1],[1,3,2]]
         #self.group_path_list =
         #for i in range(len(self.group_schedule)):
@@ -256,10 +265,7 @@ class Model:
 
             for i in range(len(self.group_schedule)):
                 self.hidden_path_list = []
-                #self.hidden_path = find_path(self.grid, self.world_map, self.world_size, self.hidden_start[0][i], self.hidden_start[1][i],
-                #                        self.hidden_end[0][i], self.hidden_end[1][i])
-                #print(self.hidden_path)
-                #self.hidden_path_list.append(self.hidden_path)
+
                 for j in range(len(self.group_schedule[i])):
                     if j == 0:
                         self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
@@ -269,7 +275,7 @@ class Model:
                                                  )
 
                         self.hidden_path_list.append(self.hidden_path)
-                    #print(len(self.group_schedule[i]))
+
                     print(self.group_schedule[i])
                     if not j+1 >= len(self.group_schedule[i]):
                         print("j:" + str(j))
@@ -281,6 +287,7 @@ class Model:
                                                  )
 
                         self.hidden_path_list.append(self.hidden_path)
+                        print(Campus.start_point_y,Campus.start_point_x)
                     if j+1 == len(self.group_schedule[i]):
                         self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
                                                  self.classroom_locations[self.group_schedule[i][j]][1][1],
@@ -289,9 +296,7 @@ class Model:
                                                  )
 
                         self.hidden_path_list.append(self.hidden_path)
-                                                 # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
-                '''print("List: ")
-                print(self.hidden_path_list)'''
+
 
                 for k in range(len(self.hidden_path_list)):
                     for l in range(len(self.hidden_path_list[k])):

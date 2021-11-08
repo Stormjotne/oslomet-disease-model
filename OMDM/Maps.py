@@ -4,7 +4,10 @@
 import numpy as np
 import cv2
 from OMDM.Campus import Campus
-img = cv2.imread('color_test.png', cv2.IMREAD_UNCHANGED)
+#img = cv2.imread('color_test.png', cv2.IMREAD_UNCHANGED)
+img = cv2.imread('final_map.png', cv2.IMREAD_UNCHANGED)
+
+
 
 
 height = img.shape[0]
