@@ -33,6 +33,7 @@ class Evolution:
         self.genome_length = hyper_parameters["genome_length"]
         self.mutation_probability = hyper_parameters["mutation_probability"]
         self.do_crossover = hyper_parameters["do_crossover"]
+        self.soft_mutation = hyper_parameters["soft_mutation"]
         self.population_size = hyper_parameters["population_size"]
         self.surviving_individuals = hyper_parameters["surviving_individuals"]
         self.number_of_parents = hyper_parameters["number_of_parents"]
@@ -45,7 +46,8 @@ class Evolution:
         self.generation = 0
         #   Initialize population
         self.population = Population(self.population_size, self.surviving_individuals, self.number_of_parents,
-            self.genome_length, self.mutation_probability, do_crossover=self.do_crossover)
+                                     self.genome_length, self.mutation_probability, do_crossover=self.do_crossover,
+                                     soft_mutation=self.soft_mutation)
 
     def print_population(self):
         """
