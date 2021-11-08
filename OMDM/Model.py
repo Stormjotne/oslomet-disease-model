@@ -560,7 +560,7 @@ class Model:
                                         self.positions[1, i0] + self.max_speed + 1).astype(
                                           np.int32)]
                     agent_percetion = self.collision_map[                                           #Give agents a perception equal to dispersion_range +1, used to detect other agents
-                                      (self.positions[0, i0] - self.dispersion_range).astype(np.int32):(
+                                      (qself.positions[0, i0] - self.dispersion_range).astype(np.int32):(
                                         self.positions[0, i0] + self.dispersion_range + 1).astype(
                                           np.int32),
                                       (self.positions[1, i0] - self.dispersion_range).astype(np.int32):(
@@ -700,6 +700,7 @@ class Model:
                     self.velocity[0, spawning_counter] = 0
                     self.velocity[1, spawning_counter] = -1
                     spawning_counter = spawning_counter + 1
+
                 if np.all(self.velocity[:,:] == 0) == True:
                     print("Jaddddd")
                     print(np.all(self.velocity[:,:] == 0))
