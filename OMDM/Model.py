@@ -168,9 +168,9 @@ class Model:
         self.agent_list_infected[5] = 1
         self.agent_list_susceptible = np.zeros(self.number_of_agents,dtype=bool)
         self.agent_list_infected_hands = np.zeros(self.number_of_agents)
-        # assign agents into different groups
+        #   assign agents into different groups
         self.agent_list_groups = np.zeros(self.number_of_agents, dtype=np.int32)
-        # contains the amount of students in groups 1,2,3. The ramainder will end up in the default group 0.
+        #   contains the amount of students in groups 1,2,3. The ramainder will end up in the default group 0.
         self.members_per_group = [12,10]
         for i in range(len(self.members_per_group)):
             self.agent_list_groups[np.random.choice(self.number_of_agents, self.members_per_group[i], False)] = i+1
@@ -179,8 +179,9 @@ class Model:
         #self.group_path_list =
         #for i in range(len(self.group_schedule)):
 
-
+        #   2*nr_of_agents array for positioning
         self.positions = np.zeros((2, self.number_of_agents))
+        #   Initialize start point in y(0) and x(1) coordinates for all agents
         self.positions[0,:] = Campus.start_point_y
         self.positions[1,:] = Campus.start_point_x
         #   Toggle random movement on or off. 1 for random movement, 0 for individual pathfinding.
@@ -235,7 +236,7 @@ class Model:
                 self.hidden_map_list = pickle.load(f)
 
 
-
+        #   Variable for storing positions of infected agents
         self.infected_positions = np.array(np.where(self.agent_list_infected == 1))
         self.infected_positions = np.array(self.positions[:, self.infected_positions])
 
@@ -582,7 +583,11 @@ class Model:
                 # Use the same array so that agents cannot be infected when located at start/finish
                 self.agent_list_susceptible[:] = True
                 self.agent_list_susceptible[stay] = False
-
+                #######
+                print(self.classroom_locations[0][1])
+                print(self.classroom_locations[1][1])
+                print(self.classroom_locations[2][1])
+                #######
                 #Making sure agents are spawing with an interval equal to ite_between
                 if np.any(self.spawn_array[:] == self.iteration_counter):
                     self.velocity[0, spawning_counter] = 0
@@ -649,7 +654,7 @@ class Model:
                 dim = (600, 600)
                 world_resized = cv2.resize(self.world, dim, interpolation=cv2.INTER_AREA)
                 cv2.imshow('frame', world_resized)
-    
+
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         if self.visualize:
