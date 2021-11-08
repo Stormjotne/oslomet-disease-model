@@ -281,13 +281,14 @@ class Model:
                                                  )
 
                         self.hidden_path_list.append(self.hidden_path)
-
-                    self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
+                    if j+1 == len(self.group_schedule[i]):
+                        self.hidden_path = find_path(self.grid, self.world_map, self.world_size,
                                                  self.classroom_locations[self.group_schedule[i][j]][1][1],
                                                  self.classroom_locations[self.group_schedule[i][j]][1][0],
                                                  Campus.start_point_y,Campus.start_point_x
                                                  )
 
+                        self.hidden_path_list.append(self.hidden_path)
                                                  # hidden_path_list.append(find_path(grid, world_map, world_size, hidden_start[0][i], hidden_start[1][i], hidden_end[0][i], hidden_end[1][i]))
                 '''print("List: ")
                 print(self.hidden_path_list)'''
