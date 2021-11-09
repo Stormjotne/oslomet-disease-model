@@ -10,7 +10,8 @@ class Genome:
     Genome is the dictionary wrapper around the gene values.
     """
 
-    def __init__(self, mutation_probability, genome_length=None, input_genome=None, input_genomes=None):
+    def __init__(self, mutation_probability, genome_length=None, input_genome=None, input_genomes=None,
+                 soft_mutation=False):
         """
         Put any declarations of object fields/variables in this method.
         :param mutation_probability:
@@ -23,10 +24,11 @@ class Genome:
         :type input_genomes:
         """
         self.genome_labels = ["number_of_agents", "social_distancing", "hand_hygiene", "face_masks",
-            "key_object_disinfection", "face_touching_avoidance", "surface_disinfection",
-            "face_shields", "ventilation_of_indoor_spaces", "respiratory_hygiene",
-            "test_based_screening", "vaccination", "cohort_size", "electives"]
+                              "key_object_disinfection", "face_touching_avoidance", "surface_disinfection",
+                              "face_shields", "ventilation_of_indoor_spaces", "respiratory_hygiene",
+                              "test_based_screening", "vaccination", "cohort_size", "electives"]
         self.mutation_probability = mutation_probability
+        self.soft_mutation = soft_mutation
         #   If genome length is provided, create new genes.
         if genome_length:
             self.genome_length = genome_length
@@ -91,7 +93,7 @@ class Genome:
         #   Unpack dictionary to manipulate gene values.
         extracted_genes = self.genome_to_genes(input_genome)
         for gene in extracted_genes:
-            genes.append(self.normalized_medium_mutation() if random() < self.mutation_probability else gene)
+            genes.append(self.normalized_mutation(gene) if random() < self.mutation_probability else gene)
         return genes
     
     def uniform_zip_genes(self, input_genes_one, input_genes_two):
@@ -110,9 +112,11 @@ class Genome:
         extracted_genes_one = self.genome_to_genes(input_genes_one)
         extracted_genes_two = self.genome_to_genes(input_genes_two)
         for gene_one, gene_two in zip(extracted_genes_one, extracted_genes_two):
-            genes.append(self.normalized_medium_mutation() if random() < self.mutation_probability else choice((gene_one, gene_two)))
+            genes.append(
+                        self.normalized_mutation(choice((gene_one, gene_two)))
+                        if random() < self.mutation_probability else choice((gene_one, gene_two)))
         return genes
-        
+    
     @staticmethod
     def normalized_medium_mutation():
         """
@@ -139,12 +143,29 @@ class Genome:
         elif input_gene >= 0.75:
             return uniform(0.5, 1)
 
+    def normalized_mutation(self, input_gene):
+        """
+        Do either soft or medium mutation, depending on hyper parameter.
+        :return:
+        :rtype:
+        """
+        if self.soft_mutation:
+            print("soft")
+            return self.normalized_soft_mutation(input_gene)
+        else:
+            print("medium")
+            return self.normalized_medium_mutation()
+
 
 #   Use this conditional to test the class by running it "standalone".
 if __name__ == "__main__":
     new_genome = Genome(0.20, genome_length=6)
-    print(new_genome.genome)
+    print("New Genome:\n{}\n".format(new_genome.genome))
+    copied_genome = Genome(0.20, input_genome=new_genome.genome, soft_mutation=True)
+    print("Cloned Genome with Soft Mutation:\n{}\n".format(copied_genome.genome))
+    uniform_zipped_genome = Genome(0.20, input_genomes=(new_genome.genome, copied_genome.genome), soft_mutation=True)
+    print("Crossed-over Genome with Soft Mutation:\n{}\n".format(uniform_zipped_genome.genome))
     copied_genome = Genome(0.20, input_genome=new_genome.genome)
-    print(copied_genome.genome)
+    print("Cloned Genome with Medium Mutation:\n{}\n".format(copied_genome.genome))
     uniform_zipped_genome = Genome(0.20, input_genomes=(new_genome.genome, copied_genome.genome))
-    print(uniform_zipped_genome.genome)
+    print("Crossed-over Genome with Medium Mutation:\n{}\n".format(uniform_zipped_genome.genome))

@@ -12,7 +12,8 @@ class Population:
     Use this class as "loader" of sorts for a collection of model individuals.
     """
 
-    def __init__(self, population_size, surviving_individuals, number_of_parents, genome_length, mutation_probability, do_crossover=False):
+    def __init__(self, population_size, surviving_individuals, number_of_parents, genome_length, mutation_probability,
+                 do_crossover=False, soft_mutation=False):
         """
         Put any declarations of object fields/variables in this method.
         """
@@ -22,6 +23,7 @@ class Population:
         self.genome_length = genome_length
         self.mutation_probability = mutation_probability
         self.do_crossover = do_crossover
+        self.soft_mutation = soft_mutation
         self.individuals = self.populate()
 
     def populate(self):
@@ -52,13 +54,15 @@ class Population:
             while len(next_generation) < self.population_size:
                 #   Tuple of two parents' genomes.
                 parent_genomes = (parents[i].genome.genome, parents[i + 1].genome.genome)
-                next_generation.append(Individual(self.mutation_probability, input_genomes=parent_genomes))
+                next_generation.append(Individual(self.mutation_probability, input_genomes=parent_genomes,
+                                                  soft_mutation=self.soft_mutation))
                 i = (i + 2) % (len(parents) - 1)
         else:
             while len(next_generation) < self.population_size:
                 #   Single parent's genome.
                 parent_genome = parents[i % self.number_of_parents].genome.genome
-                next_generation.append(Individual(self.mutation_probability, input_genes=parent_genome))
+                next_generation.append(Individual(self.mutation_probability, input_genes=parent_genome,
+                                                  soft_mutation=self.soft_mutation))
                 i += 1
         return next_generation
 

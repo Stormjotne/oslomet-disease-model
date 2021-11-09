@@ -457,10 +457,19 @@ class Model:
             self.infected_history.append(self.number_currently_infected)
             self.number_total_infected += (self.number_currently_infected - self.infected_history[step - 1])
             step += 1
-        return {"number_currently_infected": self.number_currently_infected,
-                    "infected_history": self.infected_history,
-                    "number_total_infected": self.number_total_infected,
-                    "number_of_agents": self.number_of_agents}
+        return {
+            "number_currently_infected": self.number_currently_infected,
+            "infected_history": self.infected_history,
+            "number_total_infected": self.number_total_infected,
+            "parameters": {
+                "number_of_agents": self.number_of_agents,
+                "social_distancing": self.social_distancing,
+                "hand_hygiene": self.hand_hygiene,
+                "face_masks": self.face_masks,
+                "key_object_disinfection": self.key_object_disinfection,
+                "face_touching_avoidance": self.face_touching_avoidance
+            }
+        }
 
     def calculate_path(self, destinations):
         """

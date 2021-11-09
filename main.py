@@ -8,11 +8,12 @@ Run the model optimization program we're creating from this script.
 """
 
 hyper_parameters = {
-    "number_of_generations":            2,
+    "number_of_generations":            10,
     "genome_length":                    6,
     "mutation_probability":             0.2,
     "do_crossover":                     True,
-    "population_size":                  5,
+    "soft_mutation":                    True,
+    "population_size":                  10,
     "surviving_individuals":            2,
     "number_of_parents":                2,
     "desired_agent_population":         500,
@@ -22,7 +23,7 @@ hyper_parameters = {
 
 #   Code after this conditional is only executes if the python process originates from this script.
 if __name__ == "__main__":
-    name_of_experiment = "Statistics_Test"
+    name_of_experiment = "Soft_Mutation_Test"
     Evo = Evolution.Evolution(hyper_parameters, printout=True, name=name_of_experiment)
     #   Run evolution.
     result = Evo.evolve()

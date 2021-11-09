@@ -4,6 +4,7 @@
 import os
 from multiprocessing import Pool, current_process
 from time import sleep, time
+from datetime import datetime
 from random import random, choice, shuffle
 
 from .Population import Population
@@ -25,10 +26,14 @@ class Evolution:
         self.printout = printout
         self.name = name
         self.number_of_threads = os.cpu_count() - 1
+        #   Saving the entire dictionary for statistical purposes
+        self.hyper_parameters = hyper_parameters
+        #   Saving the contents of the dictionary for functional purposes
         self.number_of_generations = hyper_parameters["number_of_generations"]
         self.genome_length = hyper_parameters["genome_length"]
         self.mutation_probability = hyper_parameters["mutation_probability"]
         self.do_crossover = hyper_parameters["do_crossover"]
+        self.soft_mutation = hyper_parameters["soft_mutation"]
         self.population_size = hyper_parameters["population_size"]
         self.surviving_individuals = hyper_parameters["surviving_individuals"]
         self.number_of_parents = hyper_parameters["number_of_parents"]
@@ -41,7 +46,8 @@ class Evolution:
         self.generation = 0
         #   Initialize population
         self.population = Population(self.population_size, self.surviving_individuals, self.number_of_parents,
-            self.genome_length, self.mutation_probability, do_crossover=self.do_crossover)
+                                     self.genome_length, self.mutation_probability, do_crossover=self.do_crossover,
+                                     soft_mutation=self.soft_mutation)
 
     def print_population(self):
         """
@@ -203,10 +209,12 @@ class Evolution:
         evolutionary_object = {
                 "best_individual": self.best_individual,
                 "fitness_trend": self.fitness_trend,
-                "parameter_trend": self.parameter_trend
+                "parameter_trend": self.parameter_trend,
+                "hyper_parameters": self.hyper_parameters
                 }
         #   Export EA Statistics to JSON and/or plots, etc.
-        Data.export_ea(ea_id=self.name + "_" + str(time()), evo_obj=evolutionary_object)
+        timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        Data.export_ea(ea_id=self.name + "_" + timestamp, evo_obj=evolutionary_object)
         #   Return the best individual or whatever else at the end.
         return evolutionary_object
 
