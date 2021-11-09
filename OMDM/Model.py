@@ -171,7 +171,7 @@ class Model:
         #   School day length in hours
         self.day_length = 8
         #   Simulation length in days
-        self.simulation_length = 9
+        self.simulation_length = 6
         #   Simulation length in time step  (3600/1 seconds per hour)
         self.simulation_time = self.simulation_length * self.day_length * 3600 / self.time_step_length
         #   Virus time-to-live on surfaces in days
