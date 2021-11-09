@@ -206,6 +206,7 @@ class Model:
         self.hand_wash_interval = 500
         self.schedule_iteration_counter = 0
         self.next_class_interval = 1200
+        self.counter_varible =0
 
 
         # assign agents into different groups
@@ -325,6 +326,11 @@ class Model:
         self.collision_map = np.zeros((self.world_size, self.world_size))
         # Adding agents to this map
         self.collision_map[self.positions[0].astype(np.int32), self.positions[1].astype(np.int32)] = 10
+
+        self.susceptibility_map = np.zeros((self.world_size, self.world_size))
+        self.susceptibility_map[Campus.start_point_y][Campus.start_point_x] = 1
+        for i in range(len(self.classroom_locations)):
+            self.susceptibility_map[self.classroom_locations[i][1][1]][self.classroom_locations[i][1][0]] = 1
 
         self.path = []
         self.random_movement = 1
@@ -537,7 +543,7 @@ class Model:
                         if random() <= self.proximity_infection_chance * (1.0 - self.mask_protection_rate):
                             self.agent_list_infected[infection_cases[1, infections_where[0][i]]] = 1
                             self.agent_list_susceptible[infection_cases[1, infections_where[0][i]]] = 0
-            
+
             if dispersion_cases.shape[1] >= 1:
                 #   Detect if distance between agents <= social_distansing
                 #
@@ -565,7 +571,7 @@ class Model:
                                         self.positions[1, i0] + self.max_speed + 1).astype(
                                           np.int32)]
                     agent_percetion = self.collision_map[                                           #Give agents a perception equal to dispersion_range +1, used to detect other agents
-                                      (qself.positions[0, i0] - self.dispersion_range).astype(np.int32):(
+                                      (self.positions[0, i0] - self.dispersion_range).astype(np.int32):(
                                         self.positions[0, i0] + self.dispersion_range + 1).astype(
                                           np.int32),
                                       (self.positions[1, i0] - self.dispersion_range).astype(np.int32):(
@@ -578,10 +584,17 @@ class Model:
                                                   (self.positions[1, i0] - 1).astype(np.int32):(
                                                           self.positions[1, i0] + 2).astype(
                                                       np.int32)]
+                    infected_sus_perception = self.susceptibility_map[
+                                                  (self.positions[0, i0] - 100).astype(np.int32):(
+                                                          self.positions[0, i0] + 101).astype(
+                                                      np.int32),
+                                                  (self.positions[1, i0] - 100).astype(np.int32):(
+                                                          self.positions[1, i0] + 101).astype(
+                                                      np.int32)]
                     #   Looking for values of walls and agents and storing corresponding coordinates
                     wall_location = np.array(np.where(wall_perception == 20))
                     agent_location = np.array(np.where(agent_percetion == 10))
-
+                    infected_sus_location = np.array(np.where(infected_sus_perception > 0))
                     infected_surfaces_location = np.array(np.where(infected_surface_perception >= 0))
                     #   Subtract max speed to make the values relative to the center
                     wall_location -= self.max_speed
@@ -599,7 +612,10 @@ class Model:
                             if random() <= (self.surface_infection_chance * virus_amount):
                                 self.agent_list_infected_hands[i0] += 1
 
-                    
+                    if len(infected_sus_location) > 0:
+                        self.agent_list_susceptible[i0]=False
+                    elif infected_sus_location == 0 and self.agent_list_susceptible[i0]==False:
+                        self.agent_list_susceptible[i0]=True
                     #   Hidden path interaction
                     path_location = np.zeros((2, 1))
     
@@ -636,7 +652,7 @@ class Model:
                     #   Decreasing the x and y velocity of agent i0 equal to sum of wall_location array
                     self.velocity[:, i0] -= np.sum(wall_location, 1) * 4
                     #   Increasing  the x and y velocity of agent i0 equal to sum of path_location array
-                    self.velocity[:, i0] += np.sum(path_location, 1) * 40
+                    self.velocity[:, i0] += np.sum(path_location, 1) * 2
 
                 # Add randomness to to movement, higher multiplicator results in greater change of direction per iteration
                 self.velocity += (np.random.rand(2, self.number_of_agents) - 0.5) * 0.5
@@ -656,9 +672,7 @@ class Model:
                 stay = []
                 for i in check_y[0]:
                     if i in check_x[0]:
-                        # print(i)
                         stay += [i]
-
                 #Check classroom 1
                 check_y_cl_1 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[0][1][1]))
                 check_x_cl_1 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[0][1][0]))
@@ -670,59 +684,102 @@ class Model:
                 # Check classroom 2
                 check_y_cl_2 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[1][1][1]))
                 check_x_cl_2 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[1][1][0]))
-
                 stay_cl_2 = []
                 for i in check_y_cl_2[0]:
                     if i in check_x_cl_2[0]:
                         stay_cl_2 += [i]
 
-
                 # Check classroom 3
                 check_y_cl_3 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[2][1][1]))
                 check_x_cl_3 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[2][1][0]))
-                #print("Start")
-                #print(self.classroom_locations[2][1][1])
-
                 stay_cl_3 = []
                 for i in check_y_cl_3[0]:
                     if i in check_x_cl_3[0]:
                         stay_cl_3 += [i]
+                # Check classroom 4
+                check_y_cl_4 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[3][1][1]))
+                check_x_cl_4 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[3][1][0]))
+                stay_cl_4 = []
+                for i in check_y_cl_4[0]:
+                    if i in check_x_cl_4[0]:
+                        stay_cl_4 += [i]
+                # Check classroom 5
+                check_y_cl_5 = np.array(np.where(self.positions[0].astype(np.int32) == self.classroom_locations[4][1][1]))
+                check_x_cl_5 = np.array(np.where(self.positions[1].astype(np.int32) == self.classroom_locations[4][1][0]))
+                stay_cl_5 = []
+                for i in check_y_cl_5[0]:
+                    if i in check_x_cl_5[0]:
+                        stay_cl_5 += [i]
                 #print(stay_cl_3)
                 #Cancel velocity when agents reach destination
                 self.velocity[:, stay] = 0
                 self.velocity[:, stay_cl_1] = 0
                 self.velocity[:, stay_cl_2] = 0
-                self.velocity[:, stay_cl_2] = 0
+                self.velocity[:, stay_cl_3] = 0
+                self.velocity[:, stay_cl_4] = 0
+                self.velocity[:, stay_cl_5] = 0
                 # Use the same arrays so that agents cannot be infected when located at spawning/classroom positions
-                self.agent_list_susceptible[:] = True
+                '''self.agent_list_susceptible[:] = True
                 self.agent_list_susceptible[stay] = False
                 self.agent_list_susceptible[stay_cl_1] = False
                 self.agent_list_susceptible[stay_cl_2] = False
                 self.agent_list_susceptible[stay_cl_3] = False
-
+                self.agent_list_susceptible[stay_cl_4] = False
+                self.agent_list_susceptible[stay_cl_5] = False
+                '''
                 #Making sure agents are spawing with an interval equal to ite_between
                 if np.any(self.spawn_array[:] == self.iteration_counter):
                     self.velocity[0, spawning_counter] = 0
                     self.velocity[1, spawning_counter] = -1
                     spawning_counter = spawning_counter + 1
 
-                if np.all(self.velocity[:,:] == 0) == True:
-                    print("Jaddddd")
-                    print(np.all(self.velocity[:,:] == 0))
-                    self.agent_room_counter1 = len(stay_cl_1)
-                    #print("SKYT MEG")
-                    #self.agent_room_counter2 = len(stay_cl_2)
-                    #self.agent_room_counter3 = len(stay_cl_3)
-                    #self.agent_room_counter4 = len(stay_cl_4)
-                    #self.agent_room_counter5 = len(stay_cl_5)
+                if np.all(self.velocity[:,:] == 0) == True and spawning_counter > 0:
+                    print("herer vi nå")
+                    self.agent_room_counter1 = len(stay_cl_1)-1
+                    self.agent_room_counter2 = len(stay_cl_2)-1
+                    self.agent_room_counter3 = len(stay_cl_3)-1
+                    self.agent_room_counter4 = len(stay_cl_4)-1
+                    self.agent_room_counter5 = len(stay_cl_5)-1
+                    if self.schedule_progress < len(self.group_schedule[0]):
+                        self.schedule_progress = self.schedule_progress+1
+                        self.counter_varible=200
 
-                if self.schedule_progress == 1 and self.agent_room_counter1>0:
-                    self.velocity[0, stay_cl_1[self.agent_room_counter1]] = 0
-                    self.velocity[1, stay_cl_1[self.agent_room_counter1]] = - 1
-                    self.agent_room_counter1 = self.agent_room_counter1 - 1
+                if (self.schedule_progress == 1 or self.schedule_progress ==  2 or self.schedule_progress ==  3) and self.counter_varible > 20:
+                    self.counter_varible=0
+                    if self.agent_room_counter1 >= 0:
+                        #print(self.agent_room_counter1,"her")
+                        self.velocity[0, stay_cl_1[self.agent_room_counter1]] = 0
+                        self.velocity[1, stay_cl_1[self.agent_room_counter1]] = self.max_speed
+                        self.agent_room_counter1 = self.agent_room_counter1 - 1
+
+                    if self.agent_room_counter2 >= 0:
+                        #print(self.agent_room_counter2, "her")
+                        self.velocity[0, stay_cl_2[self.agent_room_counter2]] = 0
+                        self.velocity[1, stay_cl_2[self.agent_room_counter2]] = self.max_speed
+                        self.agent_room_counter2 = self.agent_room_counter2 - 1
+
+                    if self.agent_room_counter3 >= 0:
+                        #print(self.agent_room_counter3, "her")
+                        self.velocity[0, stay_cl_3[self.agent_room_counter3]] = 0
+                        self.velocity[1, stay_cl_3[self.agent_room_counter3]] = self.max_speed
+                        self.agent_room_counter3 = self.agent_room_counter3 - 1
+
+                    if self.agent_room_counter4 >= 0:
+                        #print(self.agent_room_counter4, "her")
+                        self.velocity[0, stay_cl_4[self.agent_room_counter4]] = 0
+                        self.velocity[1, stay_cl_4[self.agent_room_counter4]] = -self.max_speed
+                        self.agent_room_counter4 = self.agent_room_counter4 - 1
+
+                    if self.agent_room_counter5 >= 0:
+                        print(self.agent_room_counter5, "her")
+                        self.velocity[0, stay_cl_5[self.agent_room_counter5]] = 0
+                        self.velocity[1, stay_cl_5[self.agent_room_counter5]] = -self.max_speed
+                        self.agent_room_counter5 = self.agent_room_counter5 - 1
+
                 # update all agent positions with velocity
                 self.positions += self.velocity
-
+                self.counter_varible +=1
+                print(self.counter_varible)
                 # Self infection check:
                 if self.self_infection_counter == self.self_infection_check_rate:
                     if np.any(self.agent_list_infected_hands > 0):
@@ -806,9 +863,8 @@ class Model:
             self.schedule_iteration_counter += 1
             if self.schedule_iteration_counter == self.next_class_interval:
                 if self.schedule_progress < len(self.group_schedule[0]):
-                    self.schedule_progress += 1
+                    #self.schedule_progress += 1
                     self.schedule_iteration_counter = 0
-
             self.self_infection_counter += 1
 
             # if statement true-> finish simulation
