@@ -4,7 +4,10 @@
 import numpy as np
 import cv2
 from OMDM.Campus import Campus
-img = cv2.imread('color_test.png', cv2.IMREAD_UNCHANGED)
+#img = cv2.imread('color_test.png', cv2.IMREAD_UNCHANGED)
+img = cv2.imread('final_map.png', cv2.IMREAD_UNCHANGED)
+
+
 
 
 height = img.shape[0]
@@ -41,11 +44,11 @@ def create_map_from_img(world_map,infected_surfaces_map):
                 # Check for desks
                 if img[y][x][0] == 255 and img[y][x][1] == 0 and img[y][x][2] == 255:
                     world_map[y][x] = 20
-                    infected_surfaces_map[y][x] = 0
+                    infected_surfaces_map[x][y] = 0
 
                 # Check for doors
                 if img[y][x][0] == 255 and img[y][x][1] == 0 and img[y][x][2] == 255:
-                    infected_surfaces_map[y][x] = 0
+                    infected_surfaces_map[x][y] = 0
 
                 # Check for classroom entrance/exit
                 if img[y][x][0] >= 200 and img[y][x][1] == 0 and img[y][x][2] == 0:

@@ -221,5 +221,5 @@ def find_path(grid, world_map, world_size, start_cor_y, start_cor_x, end_cor_y, 
 
     #print(p)
     p.reverse()
-    #print(p)
+    print(p)
     return p
