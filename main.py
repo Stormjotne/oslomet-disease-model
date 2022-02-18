@@ -8,12 +8,12 @@ Run the model optimization program we're creating from this script.
 """
 
 hyper_parameters = {
-    "number_of_generations":            10,
+    "number_of_generations":            2,
     "genome_length":                    6,
     "mutation_probability":             0.2,
     "do_crossover":                     True,
     "soft_mutation":                    True,
-    "population_size":                  10,
+    "population_size":                  4,
     "surviving_individuals":            2,
     "number_of_parents":                2,
     "desired_agent_population":         500,
