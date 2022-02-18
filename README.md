@@ -39,5 +39,6 @@ hyper_parameters = {
 The first time you run the evolution, the map will be imported and the agent paths will be calculated and saved as files in the project root.
 
 Statistical outputs will be found in the output folder after completing the final evolution.
-![The fitness function as a minimization problem.](Fitness Function.PNG)
-![The fitness landscape of the optimization function.](Fitness Landscape.png)
+
+    ![The fitness function as a minimization problem.](/Fitness Function.PNG)
+    ![The fitness landscape of the optimization function.](/Fitness Landscape.png)
