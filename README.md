@@ -40,6 +40,8 @@ The first time you run the evolution, the map will be imported and the agent pat
 
 Statistical outputs will be found in the output folder after completing the final evolution.
 
-![alt text](/Fitness Function.PNG "The fitness function as a minimization problem.")
+    ![alt text](Fitness Function.PNG "The fitness function as a minimization problem.")
 
-![alt text](/Fitness Landscape.png "The fitness landscape of the optimization function.")
+    ![alt text](Fitness Landscape.png "The fitness landscape of the optimization function.")
+    
+https://www.geogebra.org/3d/zqvfvabd
